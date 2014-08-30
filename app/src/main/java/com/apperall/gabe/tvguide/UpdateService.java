@@ -2,7 +2,11 @@ package com.apperall.gabe.tvguide;
 
 import android.app.IntentService;
 import android.content.ContentResolver;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -10,6 +14,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.Date;
+import java.util.Vector;
 
 public class UpdateService extends IntentService {
 
@@ -27,7 +32,10 @@ public class UpdateService extends IntentService {
 
         TVGuideDataSource dataSource = ((TVGuideApplication)getApplicationContext()).getDataSource();
         // TODO: check if network available & home wifi
-
+        if (!isNetworkAvailable()) {
+            Log.i(TAG, "network not available, can't update");
+            return;
+        }
 
         JSONArray programmeArray = dataSource.refreshProgrammes();
 
@@ -36,7 +44,7 @@ public class UpdateService extends IntentService {
 
         ContentResolver resolver = getContentResolver();
         resolver.delete(TVGuideProvider.CONTENT_URI, null, null);
-
+        Vector<ContentValues> cvVector = new Vector<ContentValues>(programmeArray.length());
 
         for (int i=0; i<programmeArray.length(); i++) {
             try {
@@ -66,15 +74,20 @@ public class UpdateService extends IntentService {
                         //Log.i(TAG, programme.getTitle());
 
 
-                        resolver.insert(TVGuideProvider.CONTENT_URI, programme.asContentValues());
-
+                       // resolver.insert(TVGuideProvider.CONTENT_URI, programme.asContentValues());
+                        cvVector.add(programme.asContentValues());
                     }
                 }
             } catch (JSONException e) {
                     Log.e(TAG, "json error: "+e.getMessage());
             }
         }
-
+        if (cvVector.size()>0) {
+            ContentValues[] cvArray = new ContentValues[cvVector.size()];
+            cvVector.toArray(cvArray);
+            int rowsInserted = resolver.bulkInsert(TVGuideProvider.CONTENT_URI, cvArray);
+            Log.v(TAG, "inserted "+rowsInserted+" programmes into db");
+        }
         //dataSource.deleteProgrammes();
         // insert new programmes in the db
 
@@ -83,6 +96,22 @@ public class UpdateService extends IntentService {
 
         Log.i(TAG, "update complete");
     }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager manager =
+                (ConnectivityManager)getApplication().getSystemService(Context.CONNECTIVITY_SERVICE);
+
+        NetworkInfo networkInfo = manager.getActiveNetworkInfo();
+
+        boolean isAvailable = false;
+
+        if (networkInfo != null && networkInfo.isConnected()) {
+            isAvailable = true;
+        }
+
+        return isAvailable;
+    }
+
 
     @Override
     public void onCreate() {

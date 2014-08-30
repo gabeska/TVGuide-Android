@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+
+
+    >
+
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="BBC 4"
+        android:id="@+id/progDlgTvChannel"
+        android:layout_marginLeft="8dp"
+        android:layout_alignParentLeft="true"
+        android:maxWidth="80dp"
+        android:layout_marginRight="8dp"
+        android:singleLine="true" />
+
+
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="Fr, 28-8"
+        android:id="@+id/progDlgTvDate"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="10dp"
+        android:layout_toLeftOf="@+id/progDlgTvStart"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="17:15"
+        android:id="@+id/progDlgTvStart"
+
+        android:layout_alignParentTop="true"
+        android:layout_alignLeft="@+id/progDlgTvStop"
+        android:layout_alignStart="@+id/progDlgTvStop"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="12dp"
+
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="18:00"
+        android:id="@+id/progDlgTvStop"
+        android:layout_below="@id/progDlgTvStart"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="12dp"
+        android:layout_alignParentRight="true"
+
+        />
+
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="Title"
+        android:id="@+id/progDlgTvTitle"
+        android:layout_alignParentTop="false"
+        android:layout_below="@id/progDlgTvChannel"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="8dp"
+
+        android:layout_marginRight="8dp"
+        android:minWidth="100dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="bla bla bla bla"
+        android:id="@+id/progDlgTvDesc"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginRight="12dp"
+        android:maxLines="10"
+        android:linksClickable="true"
+        android:layout_below="@id/progDlgTvTitle"
+
+
+        />
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="more info"
+        android:id="@+id/progDlgBtnMoreInfo"
+        android:longClickable="false"
+        android:layout_alignParentBottom="true"
+        android:maxLines="2"
+
+
+        />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Hide programme"
+        android:id="@+id/progDlgBtnHide"
+        android:layout_toRightOf="@id/progDlgBtnMoreInfo"
+        android:layout_alignParentBottom="true"
+        android:maxLines="2"
+        android:visibility="gone"
+
+
+        />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add Reminder"
+        android:id="@+id/progDlgBtnSchedule"
+        android:layout_toRightOf="@id/progDlgBtnHide"
+
+        android:layout_alignParentBottom="true"
+        android:maxLines="2"
+
+
+    />
+
+</RelativeLayout>

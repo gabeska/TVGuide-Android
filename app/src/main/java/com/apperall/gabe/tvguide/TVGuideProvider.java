@@ -81,16 +81,17 @@ public class TVGuideProvider extends ContentProvider {
     public Cursor query(Uri uri, String[] projection, String selection,
             String[] selectionArgs, String sortOrder) {
         final SQLiteDatabase db = dbHelper.getReadableDatabase();
-
+        Cursor retCursor;
         long id = getId(uri);
         if (id<0) {
-            return db.query(dbHelper.TABLE_PROGRAMMES, projection, selection, selectionArgs, null, null, sortOrder);
+            retCursor = db.query(dbHelper.TABLE_PROGRAMMES, projection, selection, selectionArgs, null, null, sortOrder);
 
         } else {
-            return db.query(dbHelper.TABLE_PROGRAMMES, projection, TVGuideDbHelper.C_PROGRAMME_ID + " = "+id, selectionArgs, null, null, sortOrder);
+            retCursor = db.query(dbHelper.TABLE_PROGRAMMES, projection, TVGuideDbHelper.C_PROGRAMME_ID + " = "+id, selectionArgs, null, null, sortOrder);
 
         }
-
+        retCursor.setNotificationUri(getContext().getContentResolver(), uri);
+        return retCursor;
     }
 
     @Override

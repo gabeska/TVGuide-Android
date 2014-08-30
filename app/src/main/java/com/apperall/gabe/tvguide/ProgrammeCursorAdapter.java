@@ -8,6 +8,9 @@ import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 /**
  * Created by gabe on 30/08/14.
  */
@@ -64,21 +67,25 @@ public class ProgrammeCursorAdapter extends CursorAdapter {
         view.setTag(viewHolder);
         return view;
     }
-
+    private final static SimpleDateFormat dateFormat = new SimpleDateFormat("EE dd MMM");
+    private final static SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm");
     @Override
     public void bindView(View view, Context context, Cursor cursor) {
         ViewHolder viewHolder = (ViewHolder)view.getTag();
 
         viewHolder.titleView.setText(cursor.getString(cursor.getColumnIndex(C_PROGRAMME_TITLE)));
 
-        //viewHolder.startDateView.setText(cursor.getString(cursor.getColumnIndex(C_PROGRAMME_TITLE)));
-        //viewHolder.startView.setText(cursor.getString(cursor.getColumnIndex(C_PROGRAMME_TITLE)));
-        //viewHolder.stopView.setText(cursor.getString(cursor.getColumnIndex(C_PROGRAMME_TITLE)));
+        Date date = new Date();
+        date.setTime(cursor.getLong(cursor.getColumnIndex(C_PROGRAMME_START)));
+
+        viewHolder.startDateView.setText(dateFormat.format(date));
+
+        viewHolder.startView.setText(timeFormat.format(date));
+        date.setTime(cursor.getLong(cursor.getColumnIndex(C_PROGRAMME_STOP)));
+
+        viewHolder.stopView.setText(timeFormat.format(date));
         viewHolder.channelView.setText(cursor.getString(cursor.getColumnIndex(C_PROGRAMME_CHANNEL_NAME)));
         viewHolder.descView.setText(cursor.getString(cursor.getColumnIndex(C_PROGRAMME_DESC)));
-
-
-
 
 
     }

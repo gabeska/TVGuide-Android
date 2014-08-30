@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content" android:layout_height="wrap_content"
+    android:focusable="false"
+    android:descendantFocusability="blocksDescendants"
+    android:layout_marginRight="4dp"
+    android:layout_marginBottom="4dp"
+    android:layout_marginTop="4dp"
+    >
+
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:inputType="time"
+        android:ems="5"
+        android:id="@+id/textStartDate"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="4dp"
+        android:layout_marginTop="2dp"
+
+        android:text="thu 28 aug" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="5"
+        android:id="@+id/textStart"
+        android:minWidth="60dp"
+        android:layout_alignParentLeft="true"
+        android:layout_below="@id/textStartDate"
+        android:layout_marginLeft="4dp"
+
+        android:text="19:15" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:ems="5"
+        android:id="@+id/textStop"
+        android:minWidth="60dp"
+
+        android:layout_below="@id/textStart"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="4dp"
+
+        android:text="20:00" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/textChannel"
+        android:maxLines="2"
+        android:maxWidth="80dp"
+        android:minWidth="60dp"
+
+        android:layout_below="@id/textStop"
+        android:layout_alignParentLeft="true"
+        android:layout_marginLeft="4dp"
+
+
+
+        android:text="BBC 2" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:text="Title"
+        android:id="@+id/textTitle"
+        android:layout_alignParentTop="true"
+        android:layout_toRightOf="@id/textStart"
+        android:layout_marginTop="1dp"
+        android:textIsSelectable="false"
+
+
+
+        />
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="bla bla bla bla bla"
+        android:id="@+id/textDesc"
+        android:maxLines="5"
+        android:ellipsize="end"
+        android:layout_below="@id/textTitle"
+        android:layout_alignLeft="@id/textTitle"
+        android:layout_toRightOf="@id/textStart"
+        android:textIsSelectable="false"
+        android:layout_marginRight="4dp"
+
+
+
+
+        />
+
+</RelativeLayout>
