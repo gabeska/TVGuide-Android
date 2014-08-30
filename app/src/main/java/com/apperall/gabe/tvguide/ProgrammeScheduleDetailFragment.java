@@ -1,10 +1,14 @@
 package com.apperall.gabe.tvguide;
 
-import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.app.ListFragment;
+import android.app.LoaderManager;
 import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.CursorLoader;
+import android.content.Intent;
+import android.content.Loader;
+import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.AsyncTask;
@@ -44,7 +48,9 @@ import java.util.List;
  * in two-pane mode (on tablets) or a {@link ProgrammeScheduleDetailActivity}
  * on handsets.
  */
-public class ProgrammeScheduleDetailFragment extends ListFragment implements AdapterView.OnItemClickListener {
+public class ProgrammeScheduleDetailFragment extends ListFragment implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor> {
+
+
     /**
      * The fragment argument representing the item ID that this fragment
      * represents.
@@ -54,6 +60,8 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
     List<Programme> programmes;
     private static final String TAG = ProgrammeScheduleDetailFragment.class.getName();
     private ProgressDialog pd;
+    private static final int DATA_LOADER = 1;
+    private String sortKey = "title ASC";
 
     /**
      * The serialization (saved instance state) Bundle key representing the
@@ -65,8 +73,8 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
      * The current activated item position. Only used on tablets.
      */
     private int mActivatedPosition = ListView.INVALID_POSITION;
-    private  ProgrammeArrayAdapter mAdapter;
-    //private CursorAdapter mAdapter;
+   // private  ProgrammeArrayAdapter mAdapter;
+    private ProgrammeCursorAdapter mAdapter;
     //private ArrayAdapter<String> mAdapter;
     /**
      * The dummy content this fragment is presenting.
@@ -89,24 +97,24 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
         super.onCreate(savedInstanceState);
 
         if (getArguments().containsKey(ARG_ITEM_ID)) {
-            // Load the dummy content specified by the fragment
-            // arguments. In a real-world scenario, use a Loader
-            // to load content from a content provider.
             mItem = (getArguments().getString(ARG_ITEM_ID));
         }
         if (getArguments().containsKey(ARG_SELECTION_TYPE)) {
-            // Load the dummy content specified by the fragment
-            // arguments. In a real-world scenario, use a Loader
-            // to load content from a content provider.
             mSelectionType = (getArguments().getString(ARG_SELECTION_TYPE));
         }
-
-
         setHasOptionsMenu(true);
-
-
-
     }
+
+    private Bundle makeLoaderBundle() {
+        Bundle bundle = new Bundle();
+
+        if (mSelectionType.equals("Channels")) {
+            bundle.putString("channel", mItem);
+            Log.i(TAG, "Channel = "+mItem);
+        }
+        return bundle;
+    }
+
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -114,30 +122,8 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
 
 
 
-        programmes = new ArrayList<Programme>();
-/*
-        Programme p = new Programme();
-        p.setTitle("title");
-        p.setDesc("desc");
-        Date date = new Date();
-        p.setStart(date);
-        p.setStop(date);
 
-        p.setCategory("bla");
-        p.setSource("ja");
-        p.setShow(true);
-        p.set_id("42");
-        p.setLength(10);
-
-        programmes.add(p);
-
-*/
-        mAdapter = new ProgrammeArrayAdapter(getActivity(), programmes);
-
-        //mAdapter = new SimpleCursorAdapter(getActivity().this, android.R.layout.simple_list_item_1)
-
-        //String[] data = {"Boter", "Kaas", "Ei"};
-        //mAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_activated_1, data);
+        getLoaderManager().initLoader(DATA_LOADER, makeLoaderBundle(), this);
 
 
         this.setListAdapter(mAdapter);
@@ -146,13 +132,16 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
 
         getListView().setOnItemClickListener(ProgrammeScheduleDetailFragment.this);
 //        mListView.setOnItemClickListener(this);
-        refreshProgrammes();
+        //refreshProgrammes();
 
     }
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        mAdapter = new ProgrammeCursorAdapter(getActivity(), null,0);
+
 
         // Restore the previously serialized activated item position.
         if (savedInstanceState != null
@@ -161,6 +150,53 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
         }
 
     }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+
+        getLoaderManager().restartLoader(DATA_LOADER, makeLoaderBundle(), this);
+    }
+
+    @Override
+    public Loader onCreateLoader(int i, Bundle bundle) {
+        Log.i(TAG, "onCreateLoader");
+        String selection="";
+        if (bundle.containsKey("channel")) {
+            selection = "channel = '"+bundle.getString("channel")+"'";
+        }
+
+
+
+        return new CursorLoader(
+                getActivity(),
+                TVGuideProvider.CONTENT_URI,
+                null, //projection
+                selection, // selection
+                null, // selectionargs
+                sortKey // sort
+        );
+    }
+
+    @Override
+    public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
+        Log.i(TAG, "onLoadFinished");
+        mAdapter.swapCursor(cursor);
+    }
+
+    @Override
+    public void onLoaderReset(Loader loader) {
+        Log.i(TAG, "onLoaderReset");
+        mAdapter.swapCursor(null);
+
+    }
+
     private void refreshProgrammes() {
         if(isNetworkAvailable()) {
             GetProgrammesTask getTask = new GetProgrammesTask();
@@ -205,18 +241,28 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_sort_Channel:
-                sortScheduleProgrammes("Channel");
-
+                sortKey = "channel ASC";
+                getLoaderManager().restartLoader(DATA_LOADER, makeLoaderBundle(), this);
                 break;
             case R.id.action_sort_Time:
-                sortScheduleProgrammes("Start");
+                //sortScheduleProgrammes("Start");
+                sortKey = "start ASC";
+                getLoaderManager().restartLoader(DATA_LOADER, makeLoaderBundle(), this);
+
                 break;
             case R.id.action_sort_Title:
-                sortScheduleProgrammes("Title");
+                //sortScheduleProgrammes("Title");
+                sortKey = "title ASC";
+                getLoaderManager().restartLoader(DATA_LOADER, makeLoaderBundle(), this);
+
                 break;
 
             case R.id.action_refresh:
-                refreshProgrammes();
+                //refreshProgrammes();
+                Intent intent = new Intent(getActivity(), UpdateService.class);
+                getActivity().startService(intent);
+
+
                 break;
 
         }
@@ -292,7 +338,7 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
         try {
 
 
-               URL programmesURL=programmesURL = new URL("http://192.168.0.42:4000/programmes/genre/"+query);
+               URL programmesURL = new URL("http://192.168.0.42:4000/programmes/genre/"+query);
 
                 if (mSelectionType.equals("Genres")) {
                     programmesURL = new URL("http://192.168.0.42:4000/programmes/genre/"+query);
@@ -403,15 +449,15 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
         Log.i("PsDetailFragment", "onItemCLick");
 
 
-        ProgrammeDialogFragment dialogFragment = new ProgrammeDialogFragment();
-        Programme programme = mAdapter.getItem(position);
-        dialogFragment.setProgramme(programme);
-        FragmentManager fm = getFragmentManager();
+       // ProgrammeDialogFragment dialogFragment = new ProgrammeDialogFragment();
+       // Programme programme = mAdapter.getItem(position);
+       // dialogFragment.setProgramme(programme);
+       // FragmentManager fm = getFragmentManager();
         //Dialog dialog =  dialogFragment.getDialog();
-        dialogFragment.setStyle(DialogFragment.STYLE_NO_TITLE,0);
+        //dialogFragment.setStyle(DialogFragment.STYLE_NO_TITLE,0);
 
        // dialog.setTitle(programme.getTitle());
-        dialogFragment.show(fm, "programmeDialog");
+      //  dialogFragment.show(fm, "programmeDialog");
 
 
 
