@@ -9,6 +9,8 @@ import org.json.JSONObject;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * Created by gabe on 27/08/14.
@@ -130,10 +132,13 @@ public class Programme {
 
     public void setStart(String start) {
 
-        // TODO: fix this for different timezones!
+
+        //Log.i("Programme", "start time: "+start);
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
         try {
-            this.start  = format.parse(start);
+            this.start = format.parse(start);;
+            //Log.i("Programme", "stored in db as: "+ this.start.toString());
         } catch (ParseException e) {
             e.printStackTrace();
         }
@@ -150,7 +155,7 @@ public class Programme {
     }
 
     public String getStartTime () {
-        SimpleDateFormat format = new SimpleDateFormat("HH:mm");
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm", Locale.getDefault());
 
         return format.format(this.start);
 
@@ -174,6 +179,8 @@ public class Programme {
 
     public void setStop(String stop) {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
+        format.setTimeZone(TimeZone.getTimeZone("UTC"));
+
         try {
             this.stop  = format.parse(stop);
         } catch (ParseException e) {
