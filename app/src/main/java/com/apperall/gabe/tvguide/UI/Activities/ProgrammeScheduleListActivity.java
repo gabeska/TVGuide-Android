@@ -1,12 +1,18 @@
-package com.apperall.gabe.tvguide;
+package com.apperall.gabe.tvguide.UI.Activities;
 
 import android.app.ActionBar;
 import android.app.ActionBar.Tab;
+import android.app.Activity;
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
-import android.app.Activity;
 import android.util.Log;
+
+import com.apperall.gabe.tvguide.Constants;
+import com.apperall.gabe.tvguide.R;
+import com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleDetailFragment;
+import com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleListFragment;
 
 
 /**
@@ -18,11 +24,11 @@ import android.util.Log;
  * item details side-by-side using two vertical panes.
  * <p>
  * The activity makes heavy use of fragments. The list of items is a
- * {@link ProgrammeScheduleListFragment} and the item details
- * (if present) is a {@link ProgrammeScheduleDetailFragment}.
+ * {@link com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleListFragment} and the item details
+ * (if present) is a {@link com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleDetailFragment}.
  * <p>
  * This activity also implements the required
- * {@link ProgrammeScheduleListFragment.Callbacks} interface
+ * {@link com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleListFragment.Callbacks} interface
  * to listen for item selections.
  */
 public class ProgrammeScheduleListActivity extends Activity
@@ -35,6 +41,8 @@ public class ProgrammeScheduleListActivity extends Activity
     private boolean mTwoPane;
     private String mSelectionType="Channels";
     private QueryArguments mCallbacks;
+    private final static int NUM_TABS = 3;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,27 +61,36 @@ public class ProgrammeScheduleListActivity extends Activity
         boolean selected = false;
 
 
-        if (mSelectionType.equals("Channels")) {
+        if (mSelectionType.equals(Constants.CHANNELS)) {
             selected= true;
         }
 
-        Tab tab = actionBar.newTab().setText("Channels").setTabListener(this);
+        Tab tab = actionBar.newTab().setText(Constants.CHANNELS).setTabListener(this);
         actionBar.addTab(tab,0,selected);
         selected = false;
-        if (mSelectionType.equals("Genres")) {
+        if (mSelectionType.equals(Constants.GENRES)) {
             selected= true;
         }
-        tab = actionBar.newTab().setText("Genres").setTabListener(this);
+        tab = actionBar.newTab().setText(Constants.GENRES).setTabListener(this);
         actionBar.addTab(tab,1,selected);
 
         selected = false;
-        if (mSelectionType.equals("Queries")) {
+        if (mSelectionType.equals(Constants.QUERIES)) {
             selected= true;
+
         }
 
-        tab = actionBar.newTab().setText("Queries").setTabListener(this);
+        tab = actionBar.newTab().setText(Constants.QUERIES).setTabListener(this);
         actionBar.addTab(tab,2,selected);
 
+        selected = false;
+        if (mSelectionType.equals(Constants.NOW)) {
+            selected= true;
+
+        }
+
+        tab = actionBar.newTab().setText(Constants.NOW).setTabListener(this);
+        actionBar.addTab(tab,3,selected);
 
 
         if (findViewById(R.id.programmeschedule_detail_container) != null) {
@@ -92,7 +109,7 @@ public class ProgrammeScheduleListActivity extends Activity
 
             Bundle arguments = new Bundle();
             arguments.putString(ProgrammeScheduleDetailFragment.ARG_ITEM_ID, "BBC 1");
-            arguments.putString(ProgrammeScheduleDetailFragment.ARG_SELECTION_TYPE, "Channels");
+            arguments.putString(ProgrammeScheduleDetailFragment.ARG_SELECTION_TYPE, Constants.CHANNELS);
             ProgrammeScheduleDetailFragment fragment = new ProgrammeScheduleDetailFragment();
             fragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
@@ -116,15 +133,32 @@ public class ProgrammeScheduleListActivity extends Activity
         Log.i("ScheduleListActivity, onTabSelected", tab.getText().toString());
         String tabText = tab.getText().toString();
 
-        if (tabText.equals("Genres")) {
-            mSelectionType = "Genres";
-        } else if (tabText.equals("Channels")) {
-            mSelectionType = "Channels";
-        } else if (tabText.equals("Queries")) {
-            mSelectionType = "Queries";
+
+        FragmentManager fm = getFragmentManager();
+        ProgrammeScheduleListFragment listFragment = (ProgrammeScheduleListFragment) fm.findFragmentById(R.id.programmeschedule_list);
+        boolean shouldShowFragment = true;
+        if (tabText.equals(Constants.GENRES)) {
+            mSelectionType = Constants.GENRES;
+        } else if (tabText.equals(Constants.CHANNELS)) {
+            mSelectionType = Constants.CHANNELS;
+        } else if (tabText.equals(Constants.QUERIES)) {
+            mSelectionType = Constants.QUERIES;
+        } else if (tabText.equals(Constants.NOW)) {
+            mSelectionType = Constants.NOW;
+            shouldShowFragment = false;
         }
 
-        ProgrammeScheduleListFragment listFragment = (ProgrammeScheduleListFragment) getFragmentManager().findFragmentById(R.id.programmeschedule_list);
+        FragmentTransaction fragmentTransaction = fm.beginTransaction();
+        ft.setCustomAnimations(android.R.animator.fade_in, android.R.animator.fade_out);
+        if (listFragment.isHidden() && shouldShowFragment==true) {
+            fragmentTransaction.show(listFragment);
+        } else if (!listFragment.isHidden() && !shouldShowFragment) {
+            fragmentTransaction.hide(listFragment);
+        }
+
+        fragmentTransaction.commit();
+
+
         if (listFragment!= null) {
             listFragment.setDisplaymode(mSelectionType);
         }
@@ -145,8 +179,6 @@ public class ProgrammeScheduleListActivity extends Activity
          */
         public void onArgumentsChanged(Bundle bundle);
     }
-
-
 
 
    // public void onArgumentsChanged(Bundle bundle) {
@@ -184,8 +216,11 @@ public class ProgrammeScheduleListActivity extends Activity
             Intent detailIntent = new Intent(this, ProgrammeScheduleDetailActivity.class);
             detailIntent.putExtra(ProgrammeScheduleDetailFragment.ARG_ITEM_ID, id);
             detailIntent.putExtra(ProgrammeScheduleDetailFragment.ARG_SELECTION_TYPE, mSelectionType);
-
             startActivity(detailIntent);
         }
     }
+
+
+
+
 }

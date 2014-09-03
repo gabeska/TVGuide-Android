@@ -1,10 +1,14 @@
-package com.apperall.gabe.tvguide;
+package com.apperall.gabe.tvguide.UI.Activities;
 
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
+
+import com.apperall.gabe.tvguide.Model.Programme;
+import com.apperall.gabe.tvguide.R;
+import com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleDetailFragment;
 
 
 /**
@@ -14,7 +18,7 @@ import android.view.MenuItem;
  * in a {@link ProgrammeScheduleListActivity}.
  * <p>
  * This activity is mostly just a 'shell' activity containing nothing
- * more than a {@link ProgrammeScheduleDetailFragment}.
+ * more than a {@link com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleDetailFragment}.
  */
 public class ProgrammeScheduleDetailActivity extends Activity {
 
@@ -62,6 +66,10 @@ public class ProgrammeScheduleDetailActivity extends Activity {
             getFragmentManager().beginTransaction()
                     .add(R.id.programmeschedule_detail_container, fragment)
                     .commit();
+
+
+            getActionBar().setTitle(getIntent().getStringExtra(ProgrammeScheduleDetailFragment.ARG_ITEM_ID));
+
         }
     }
 

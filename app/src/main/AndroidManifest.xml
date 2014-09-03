@@ -4,6 +4,7 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
 
     <application
         android:name=".TVGuideApplication"
@@ -12,7 +13,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".ProgrammeScheduleListActivity"
+            android:name=".UI.Activities.ProgrammeScheduleListActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,9 +22,9 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ProgrammeScheduleDetailActivity"
+            android:name=".UI.Activities.ProgrammeScheduleDetailActivity"
             android:label="@string/title_programmeschedule_detail"
-            android:parentActivityName=".ProgrammeScheduleListActivity" >
+            android:parentActivityName=".UI.Activities.ProgrammeScheduleListActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ProgrammeScheduleListActivity" />
@@ -36,11 +37,17 @@
         </service>
 
         <provider
-            android:name=".TVGuideProvider"
+            android:name=".Contentproviders.TVGuideProvider"
             android:authorities="com.apperall.gabe.tvguide.tvguideprovider"
             android:enabled="true"
             android:exported="true" >
         </provider>
+
+        <receiver
+            android:name=".Broadcastreceivers.WakefulUpdateReceiver"
+            android:enabled="true"
+            android:exported="true" >
+        </receiver>
     </application>
 
 </manifest>

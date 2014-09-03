@@ -1,7 +1,8 @@
-package com.apperall.gabe.tvguide;
+package com.apperall.gabe.tvguide.UI.Fragments;
 
 import android.app.DialogFragment;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.CalendarContract;
 import android.util.Log;
@@ -9,6 +10,9 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.apperall.gabe.tvguide.Model.Programme;
+import com.apperall.gabe.tvguide.R;
 
 import java.util.Calendar;
 
@@ -18,13 +22,16 @@ import java.util.Calendar;
 public class ProgrammeDialogFragment extends DialogFragment implements View.OnClickListener {
 
     private Programme mProgramme;
-
+    public static final String TAG = ProgrammeDialogFragment.class.getName();
     public Programme getProgramme() {
         return mProgramme;
     }
 
     public void setProgramme(Programme mProgramme) {
+
         this.mProgramme = mProgramme;
+
+
     }
 
     @Override
@@ -59,8 +66,13 @@ public class ProgrammeDialogFragment extends DialogFragment implements View.OnCl
             tvStop.setText(mProgramme.getStopTime());
             tvStartDate.setText(mProgramme.getStartDateStr());
 
+            if (!(mProgramme.getUriStr().equals(mProgramme.NO_URI))) {
+                moreinfoBtn.setVisibility(View.VISIBLE);
+            }
+        } else {
+            Log.i(TAG, "programme is null");
+            moreinfoBtn.setVisibility(View.GONE);
         }
-
 
       return fragmentView;
     }
@@ -90,6 +102,15 @@ public class ProgrammeDialogFragment extends DialogFragment implements View.OnCl
                     .putExtra(CalendarContract.Events.EVENT_LOCATION, mProgramme.getChannel())
                     .putExtra(CalendarContract.Events.AVAILABILITY, CalendarContract.Events.AVAILABILITY_FREE);
             startActivity(intent);
+
+        } else if (v.getId() == R.id.progDlgBtnMoreInfo) {
+
+                Uri infoURI = Uri.parse(mProgramme.getUriStr());;
+                Intent intent = new Intent(Intent.ACTION_VIEW);
+                intent.setData(infoURI);
+                startActivity(intent);
+
+
 
         }
 

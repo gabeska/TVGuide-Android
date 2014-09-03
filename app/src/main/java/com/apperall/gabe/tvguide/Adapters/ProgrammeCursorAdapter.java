@@ -1,4 +1,4 @@
-package com.apperall.gabe.tvguide;
+package com.apperall.gabe.tvguide.Adapters;
 
 import android.content.Context;
 import android.database.Cursor;
@@ -7,6 +7,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CursorAdapter;
 import android.widget.TextView;
+
+import com.apperall.gabe.tvguide.R;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

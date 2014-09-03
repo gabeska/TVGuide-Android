@@ -1,4 +1,4 @@
-package com.apperall.gabe.tvguide;
+package com.apperall.gabe.tvguide.Model;
 
 /**
  * Created by gabe on 28/08/14.

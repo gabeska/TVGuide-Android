@@ -23,7 +23,7 @@
 
     <fragment
         android:id="@+id/programmeschedule_list"
-        android:name="com.apperall.gabe.tvguide.ProgrammeScheduleListFragment"
+        android:name="com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleListFragment"
         android:layout_width="0dp"
         android:layout_height="match_parent"
         android:layout_weight="1"

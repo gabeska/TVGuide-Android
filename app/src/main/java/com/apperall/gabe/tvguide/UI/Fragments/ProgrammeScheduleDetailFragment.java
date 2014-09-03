@@ -1,9 +1,11 @@
-package com.apperall.gabe.tvguide;
+package com.apperall.gabe.tvguide.UI.Fragments;
 
+import android.app.AlarmManager;
 import android.app.DialogFragment;
 import android.app.FragmentManager;
 import android.app.ListFragment;
 import android.app.LoaderManager;
+import android.app.PendingIntent;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
@@ -16,17 +18,28 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ListView;
+import android.widget.SearchView;
+import android.widget.Toast;
+
+import com.apperall.gabe.tvguide.Constants;
+import com.apperall.gabe.tvguide.Model.Programme;
+import com.apperall.gabe.tvguide.Adapters.ProgrammeCursorAdapter;
+import com.apperall.gabe.tvguide.R;
+import com.apperall.gabe.tvguide.Contentproviders.TVGuideProvider;
+import com.apperall.gabe.tvguide.UI.Activities.ProgrammeScheduleListActivity;
+import com.apperall.gabe.tvguide.UpdateService;
+import com.apperall.gabe.tvguide.Broadcastreceivers.WakefulUpdateReceiver;
 
 import java.util.Date;
 
 /**
  * A fragment representing a single ProgrammeSchedule detail screen.
- * This fragment is either contained in a {@link ProgrammeScheduleListActivity}
- * in two-pane mode (on tablets) or a {@link ProgrammeScheduleDetailActivity}
+ * This fragment is either contained in a {@link com.apperall.gabe.tvguide.UI.Activities.ProgrammeScheduleListActivity}
+ * in two-pane mode (on tablets) or a {@link com.apperall.gabe.tvguide.UI.Activities.ProgrammeScheduleDetailActivity}
  * on handsets.
  */
 public class ProgrammeScheduleDetailFragment extends ListFragment implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor>,
-        ProgrammeScheduleListActivity.QueryArguments{
+        ProgrammeScheduleListActivity.QueryArguments, SearchView.OnQueryTextListener{
 
 
     /**
@@ -38,7 +51,7 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
     private static final String TAG = ProgrammeScheduleDetailFragment.class.getName();
     //private ProgressDialog pd;
     private static final int DATA_LOADER = 1;
-    private String sortKey = "title ASC";
+    private String sortKey = "start ASC";
 
     /**
      * The serialization (saved instance state) Bundle key representing the
@@ -60,6 +73,7 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
 
     private Menu mMenu;
     private ListView mListView;
+    private SearchView mSearchView;
 
     /**
      * Mandatory empty constructor for the fragment manager to instantiate the
@@ -84,12 +98,17 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
     private Bundle makeLoaderBundle() {
         Bundle bundle = new Bundle();
 
-        if (mSelectionType.equals("Channels")) {
+        if (mSelectionType.equals(Constants.CHANNELS)) {
             bundle.putString("channel", mItem);
             Log.i(TAG, "Channel = "+mItem);
-        } else if (mSelectionType.equals("Genres")) {
+        } else if (mSelectionType.equals(Constants.GENRES)) {
             bundle.putString("category", mItem);
             Log.i(TAG, "Genre = "+mItem);
+        } else if (mSelectionType.equals(Constants.QUERIES)) {
+            bundle.putString("query", mItem);
+            Log.i(TAG, "Query = "+mItem);
+        } else if (mSelectionType.equals(Constants.NOW)) {
+            bundle.putString(Constants.NOW, Constants.NOW);
         }
         return bundle;
     }
@@ -106,6 +125,9 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
         this.getListView().setAdapter(mAdapter);
 
         getListView().setOnItemClickListener(ProgrammeScheduleDetailFragment.this);
+
+
+
 //        mListView.setOnItemClickListener(this);
         //refreshProgrammes();
 
@@ -140,16 +162,24 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
 
     @Override
     public Loader onCreateLoader(int i, Bundle bundle) {
+
+        Date now = new Date();
         Log.i(TAG, "onCreateLoader");
         String selection="";
         if (bundle.containsKey("channel")) {
             selection = "channel = '"+bundle.getString("channel")+"'";
         } else if (bundle.containsKey("category")) {
             selection = "category = '"+bundle.getString("category")+ "'";
+        } else if (bundle.containsKey("query")) {
+            selection = "title LIKE '%"+bundle.getString("query")+"%' OR desc LIKE '%"+bundle.getString("query")+"%'";
+        } else if (bundle.containsKey(Constants.NOW)) {
+            selection = "start < "+now.getTime();
+            sortKey = "channel ASC";
         }
 
-        //TODO: don't include programmes that have already finished
+        selection = selection + " AND stop > "+now.getTime();
 
+        Log.i(TAG, "selection = "+selection);
 
         return new CursorLoader(
                 getActivity(),
@@ -165,6 +195,12 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
     public void onLoadFinished(Loader<Cursor> cursorLoader, Cursor cursor) {
         Log.i(TAG, "onLoadFinished");
         mAdapter.swapCursor(cursor);
+        ListView view = getListView();
+        if (view!= null) {
+            view.setSelection(0);
+        } else {
+            Log.i(TAG, "listview is null!");
+        }
     }
 
     @Override
@@ -179,18 +215,21 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
 
         mItem = bundle.getString(ARG_ITEM_ID);
         mSelectionType = bundle.getString(ARG_SELECTION_TYPE);
-        getActivity().setTitle(mSelectionType);
+        getActivity().getActionBar().setTitle(mItem);
+
         getLoaderManager().restartLoader(DATA_LOADER, makeLoaderBundle(), this);
+        setSortOptionsVisibility();
+        if (!(mSearchView==null) && !mSearchView.isIconified()) {
+
+            mSearchView.setIconified(true);
+            //MenuItem searchItem = mMenu.findItem(R.id.search);
+            //searchItem.collapseActionView(searchItem.getActionView());
+            mSearchView.onActionViewCollapsed();
+        }
+
 
     }
-
-
-    @Override
-    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
-        inflater.inflate(R.menu.schedule_menu,menu);
-        mMenu = menu;
-
-
+    private void setSortOptionsVisibility() {
         if (mSelectionType.equals("Channels")) {
             if (mMenu!=null) {
                 mMenu.findItem(R.id.action_sort_Channel).setVisible(false);
@@ -198,6 +237,17 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
         } else  if (mMenu!=null) {
             mMenu.findItem(R.id.action_sort_Channel).setVisible(true);
         }
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+        inflater.inflate(R.menu.schedule_menu,menu);
+        mMenu = menu;
+
+        setSortOptionsVisibility();
+        mSearchView = (SearchView)menu.findItem(R.id.search).getActionView();
+        mSearchView.setOnQueryTextListener(this);
+
 
     }
 
@@ -205,8 +255,10 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
     public void onListItemClick(ListView l, View v, int position, long id) {
 
         Log.i("detailfragment", "onListItemClick()");
-     //((ProgrammeScheduleDetailActivity)getActivity()).setProgramme(programme);
+        // This never gets called!
 
+     //((ProgrammeScheduleDetailActivity)getActivity()).setProgramme(programme);
+/*
 
         ProgrammeDialogFragment dialogFragment = new ProgrammeDialogFragment();
         // Programme programme = mAdapter.getItem(position);
@@ -214,7 +266,7 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
         FragmentManager fm = getFragmentManager();
 
         dialogFragment.show(fm, "programmeDialog");
-
+*/
     }
 
     @Override
@@ -239,19 +291,58 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
 
             case R.id.action_refresh:
                 //refreshProgrammes();
-                Intent intent = new Intent(getActivity(), UpdateService.class);
-                getActivity().startService(intent);
+
+                // update the data now
+                Intent nowIntent = new Intent(getActivity(), UpdateService.class);
+                getActivity().startService(nowIntent);
+
+
+                // and schedule half-daily updates
+                Intent intent = new Intent(getActivity(), WakefulUpdateReceiver.class);
+                AlarmManager am = (AlarmManager)getActivity().getSystemService(getActivity().ALARM_SERVICE);
+                PendingIntent updateIntent = PendingIntent.getBroadcast(getActivity(), 1, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+                //am.set(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime()+
+                //30*1000, updateIntent);
+                am.setInexactRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, AlarmManager.INTERVAL_HALF_DAY, AlarmManager.INTERVAL_HALF_DAY, updateIntent );
+
+                Toast.makeText(getActivity(), "update scheduled", Toast.LENGTH_SHORT);
+                Log.i(TAG, "update scheduled");
+
 
                 break;
 
         }
 
-        mAdapter.notifyDataSetChanged();
+        //mAdapter.notifyDataSetChanged();
 
         return true;
     }
 
 
+
+
+
+    @Override
+    public boolean onQueryTextSubmit(String query) {
+        Log.i(TAG, "onQueryTextSubmit: "+query);
+        if (query.length()<3) {
+            return false;
+        }
+        mSelectionType = "Queries";
+        mItem = query;
+
+        getLoaderManager().restartLoader(DATA_LOADER, makeLoaderBundle(), this);
+
+        getActivity().getActionBar().setTitle(query);
+
+        return true;
+    }
+
+    @Override
+    public boolean onQueryTextChange(String newText) {
+        //Log.i(TAG, "onQueryTextChange");
+        return false;
+    }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
@@ -293,6 +384,9 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
         programme.setChannel(cursor.getString(cursor.getColumnIndex(ProgrammeCursorAdapter.C_PROGRAMME_CHANNEL_NAME)));
         programme.setDesc(cursor.getString(cursor.getColumnIndex(ProgrammeCursorAdapter.C_PROGRAMME_DESC)));
 
+
+        programme.setUriStr(cursor.getString(cursor.getColumnIndex(ProgrammeCursorAdapter.C_PROGRAMME_URI)));
+        Log.i(TAG,"uri = "+programme.getUriStr());
 
         ProgrammeDialogFragment dialogFragment = new ProgrammeDialogFragment();
         // Programme programme = mAdapter.getItem(position);

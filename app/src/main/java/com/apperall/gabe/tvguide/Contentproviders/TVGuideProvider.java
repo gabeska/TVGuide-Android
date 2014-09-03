@@ -1,4 +1,4 @@
-package com.apperall.gabe.tvguide;
+package com.apperall.gabe.tvguide.Contentproviders;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -7,6 +7,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.net.Uri;
+import android.util.Log;
 
 public class TVGuideProvider extends ContentProvider {
     public static final Uri CONTENT_URI = Uri.parse("content://com.apperall.gabe.tvguide.tvguideprovider");
@@ -119,7 +120,7 @@ public class TVGuideProvider extends ContentProvider {
     private class TVGuideDbHelper extends SQLiteOpenHelper {
 
         private static final String DATABASE_NAME = "tvguide.db";
-        private static final int DATABASE_VERSION = 2;
+        private static final int DATABASE_VERSION = 4;
 
         public static final String TABLE_PROGRAMMES = "programmes";
         public static final String C_PROGRAMME_ID = "_id";
@@ -146,10 +147,10 @@ public class TVGuideProvider extends ContentProvider {
         private static final String TABLE_PROGRAMMES_CREATE = "create table "
                 + TABLE_PROGRAMMES + "(" + C_PROGRAMME_ID
                 + " integer primary key autoincrement, " + C_PROGRAMME_TITLE
-                + " text not null, "
+                + " text not null collate nocase, "
                 + C_PROGRAMME_START + " text, "
                 + C_PROGRAMME_STOP + " text, "
-                + C_PROGRAMME_DESC + " text, "
+                + C_PROGRAMME_DESC + " text collate nocase, "
                 + C_PROGRAMME_CHANNEL_ID + " text, "
                 + C_PROGRAMME_CHANNEL_NAME + " text, "
                 + C_PROGRAMME_CATEGORY + " text, "
@@ -176,6 +177,8 @@ public class TVGuideProvider extends ContentProvider {
 
         @Override
         public void onCreate(SQLiteDatabase db) {
+            Log.i("dbHelper","onCreate");
+
             db.execSQL(TABLE_PROGRAMMES_CREATE);
             db.execSQL(TABLE_CHANNELS_CREATE);
 
@@ -183,8 +186,10 @@ public class TVGuideProvider extends ContentProvider {
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+            Log.i("dbHelper","onUpgrade");
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_PROGRAMMES);
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_CHANNELS);
+            onCreate(db);
         }
     }
 

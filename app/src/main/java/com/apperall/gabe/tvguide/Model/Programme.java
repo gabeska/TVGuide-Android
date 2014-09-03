@@ -1,4 +1,4 @@
-package com.apperall.gabe.tvguide;
+package com.apperall.gabe.tvguide.Model;
 
 import android.content.ContentValues;
 import android.util.Log;
@@ -33,7 +33,7 @@ public class Programme {
     public static final String ID = "ID";
 
 
-
+    public static final String NO_URI = "NO_URI";
 
     private String category;
     private String title;
@@ -44,7 +44,7 @@ public class Programme {
     private String channelId;
     private String desc;
     private boolean show;
-    private String uriStr;
+    private String uriStr = NO_URI;
   //  private String source;
     private String _id;
 
@@ -104,7 +104,10 @@ public class Programme {
         this.setChannelId(values.getAsString(CHANNELID));
         this.setDesc(values.getAsString(DESC));
         this.setShow(values.getAsBoolean(SHOW));
-        this.setUriStr(values.getAsString(URISTR));
+
+        //if (values.containsKey("URISTR")) {
+        //    this.setUriStr(values.getAsString(URISTR));
+        //}
       //  this.setSource(values.getAsString(SOURCE));
         this.set_id(values.getAsString(ID));
 
@@ -121,7 +124,9 @@ public class Programme {
             setLength(jsonObject.getInt("length"));
             setShow(jsonObject.getBoolean("show"));
             setChannel(jsonObject.getString("channel"));
-            //programme.setUriStr(jsonObject.getString("uri"));
+            if (jsonObject.has("uri")) {
+                setUriStr(jsonObject.getString("uri"));
+            }
            // setSource(jsonObject.getString("source"));
         } catch (JSONException e) {
             Log.e("Programme", "Error reading from JSON: "+e.getMessage());
@@ -233,7 +238,7 @@ public class Programme {
         if (uriStr!=null) {
             return uriStr;
         } else {
-            return "";
+            return NO_URI;
         }
 
 

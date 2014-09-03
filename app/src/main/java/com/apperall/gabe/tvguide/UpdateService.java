@@ -7,7 +7,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.support.v4.content.WakefulBroadcastReceiver;
 import android.util.Log;
+
+import com.apperall.gabe.tvguide.Contentproviders.TVGuideProvider;
+import com.apperall.gabe.tvguide.Model.Programme;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -92,8 +96,7 @@ public class UpdateService extends IntentService {
         // insert new programmes in the db
 
 
-
-
+        WakefulBroadcastReceiver.completeWakefulIntent(intent);
         Log.i(TAG, "update complete");
     }
 
@@ -105,8 +108,15 @@ public class UpdateService extends IntentService {
 
         boolean isAvailable = false;
 
-        if (networkInfo != null && networkInfo.isConnected()) {
-            isAvailable = true;
+        if (networkInfo != null && networkInfo.isConnected() ) {
+
+            NetworkInfo wifiInfo = manager.getNetworkInfo(manager.TYPE_WIFI);
+            if (wifiInfo.isConnected()) {
+
+                isAvailable = true;
+            } else {
+                Log.d(TAG, "not on wifi, update cancelled");
+            }
         }
 
         return isAvailable;
