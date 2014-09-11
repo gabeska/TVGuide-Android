@@ -196,7 +196,7 @@ public class TVGuideProgrammesFragment extends ListFragment implements AdapterVi
 
         return new CursorLoader(
                 getActivity(),
-                TVGuideProvider.CONTENT_URI,
+                TVGuideProvider.PROGRAMME_CONTENT_URI,
                 null, //projection
                 selection, // selection
                 null, // selectionargs

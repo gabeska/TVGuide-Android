@@ -16,8 +16,13 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.apperall.gabe.tvguide.Contentproviders.TVGuideProvider;
+import com.apperall.gabe.tvguide.Model.Channel;
 import com.apperall.gabe.tvguide.Model.Programme;
 import com.apperall.gabe.tvguide.R;
+import com.parse.FindCallback;
+import com.parse.ParseException;
+import com.parse.ParseObject;
+import com.parse.ParseQuery;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -31,6 +36,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
+import java.util.List;
 import java.util.Vector;
 
 /**
@@ -40,7 +46,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
     private static final String TAG = "TVGuideSyncAdapter";
 
     public static final int SYNC_INTERVAL = 24*60*60; // 24 uur
-    public static final int SYNC_FLEXTIME = SYNC_INTERVAL/3;
+    public static final int SYNC_FLEXTIME = SYNC_INTERVAL/2;
 
 
 
@@ -52,7 +58,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(TAG, "onPerformSync");
 
-
+        //updateChannels(); // TODO: nadenken over waar/wanneer dit moet gebeuren
 
         JSONArray programmeArray = refreshProgrammes();
         if (programmeArray != null && programmeArray.length()>0) {
@@ -61,7 +67,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
             Date now = new Date();
 
             ContentResolver resolver = getContext().getContentResolver();
-            resolver.delete(TVGuideProvider.CONTENT_URI, null, null);
+            resolver.delete(TVGuideProvider.PROGRAMME_CONTENT_URI, null, null);
             Vector<ContentValues> cvVector = new Vector<ContentValues>(programmeArray.length());
 
             for (int i = 0; i < programmeArray.length(); i++) {
@@ -85,7 +91,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
             if (cvVector.size() > 0) {
                 ContentValues[] cvArray = new ContentValues[cvVector.size()];
                 cvVector.toArray(cvArray);
-                int rowsInserted = resolver.bulkInsert(TVGuideProvider.CONTENT_URI, cvArray);
+                int rowsInserted = resolver.bulkInsert(TVGuideProvider.PROGRAMME_CONTENT_URI, cvArray);
                 Log.v(TAG, "inserted " + rowsInserted + " programmes into db");
             }
             SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(getContext());
@@ -99,6 +105,40 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
             Log.e(TAG, "onPerformSync: update failed");
         }
     }
+
+
+    public void updateChannels() {
+        Log.i(TAG, "updateChannels");
+        ParseQuery<ParseObject>query = ParseQuery.getQuery("Channel");
+        //query.setCachePolicy(ParseQuery.CachePolicy.CACHE_ELSE_NETWORK); // TODO: hierover nadenken!
+
+        query.findInBackground(new FindCallback<ParseObject>() {
+            @Override
+            public void done(List<ParseObject> parseObjects, ParseException e) {
+                Log.i(TAG, "updateChannels:done");
+
+                if (e==null) {
+                    ContentResolver resolver = getContext().getContentResolver();
+                    resolver.delete(TVGuideProvider.CHANNEL_CONTENT_URI, null, null);
+                    int channelsInserted = 0;
+                    for (ParseObject po:parseObjects) {
+                        channelsInserted++;
+                        Channel ch = Channel.fromParseObject(po);
+                        resolver.insert(TVGuideProvider.CHANNEL_CONTENT_URI, ch.asContentValues());
+
+                        Log.i(TAG, ch.toString());
+                    }
+                    Log.i(TAG, "inserted "+channelsInserted+" channels");
+                } else {
+                    Log.e(TAG, "error updating channels");
+
+                }
+            }
+        });
+
+
+    }
+
 
     public static JSONArray refreshProgrammes() {
         Log.i(TAG,"refreshProgrammes");
@@ -127,7 +167,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
                 //Log.v(TAG, responseData);
                 //JSONObject jsonObject = new JSONObject(responseData);
                 JSONArray programmeArray =  new JSONArray(responseData);
-
+                reader.close();
                 return programmeArray;
 
             } else {
@@ -136,7 +176,6 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
 
             connection.disconnect();
 
-
         } catch (MalformedURLException e) {
             Log.e("detail", "Exception: "+e.getMessage());
         } catch (IOException e) {
@@ -144,6 +183,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
 
         } catch (Exception e) {
             Log.e("detail", "Exception: "+e.getMessage());
+
 
         }
 

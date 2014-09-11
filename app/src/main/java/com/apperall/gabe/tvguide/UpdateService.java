@@ -47,7 +47,7 @@ public class UpdateService extends IntentService {
         //ContentValues[] values = new ContentValues[]{};
 
         ContentResolver resolver = getContentResolver();
-        resolver.delete(TVGuideProvider.CONTENT_URI, null, null);
+        resolver.delete(TVGuideProvider.PROGRAMME_CONTENT_URI, null, null);
         Vector<ContentValues> cvVector = new Vector<ContentValues>(programmeArray.length());
 
         for (int i=0; i<programmeArray.length(); i++) {
@@ -89,7 +89,7 @@ public class UpdateService extends IntentService {
         if (cvVector.size()>0) {
             ContentValues[] cvArray = new ContentValues[cvVector.size()];
             cvVector.toArray(cvArray);
-            int rowsInserted = resolver.bulkInsert(TVGuideProvider.CONTENT_URI, cvArray);
+            int rowsInserted = resolver.bulkInsert(TVGuideProvider.PROGRAMME_CONTENT_URI, cvArray);
             Log.v(TAG, "inserted "+rowsInserted+" programmes into db");
         }
         //dataSource.deleteProgrammes();

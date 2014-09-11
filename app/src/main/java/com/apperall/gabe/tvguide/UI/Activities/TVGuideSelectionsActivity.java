@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.MenuItem;
 
-import com.apperall.gabe.tvguide.Model.Programme;
 import com.apperall.gabe.tvguide.R;
 import com.apperall.gabe.tvguide.UI.Fragments.TVGuideProgrammesFragment;
 
@@ -23,15 +22,7 @@ import com.apperall.gabe.tvguide.UI.Fragments.TVGuideProgrammesFragment;
 public class TVGuideSelectionsActivity extends Activity {
 
     private static final String TAG = TVGuideSelectionsActivity.class.getSimpleName();
-    private Programme mProgramme;
 
-    public Programme getProgramme() {
-        return mProgramme;
-    }
-
-    public void setProgramme(Programme mProgramme) {
-        this.mProgramme = mProgramme;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {

@@ -185,8 +185,9 @@ public class TVGuideSelectionsFragment extends ListFragment {
                                 query.whereEqualTo("keyword", item);
                                 try {
                                     Query queryItem = query.getFirst();
-                                    queryItem.unpin();
                                     queryItem.deleteEventually();
+
+                                    queryItem.unpin();
                                 } catch (ParseException e) {
                                     e.printStackTrace();
                                 }
@@ -230,7 +231,7 @@ public class TVGuideSelectionsFragment extends ListFragment {
             mAdapter.clear();
 
             ParseQuery<Query> query = Query.getQuery();
-  //          query.fromLocalDatastore();
+            query.fromLocalDatastore();
 
             query.findInBackground(new FindCallback<Query>() {
               @Override
