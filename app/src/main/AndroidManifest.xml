@@ -5,6 +5,9 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
 
     <application
         android:name=".TVGuideApplication"
@@ -13,7 +16,7 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".UI.Activities.ProgrammeScheduleListActivity"
+            android:name=".UI.Activities.TVGuideMainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,14 +25,15 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".UI.Activities.ProgrammeScheduleDetailActivity"
+            android:name=".UI.Activities.TVGuideSelectionsActivity"
             android:label="@string/title_programmeschedule_detail"
-            android:parentActivityName=".UI.Activities.ProgrammeScheduleListActivity" >
+            android:parentActivityName=".UI.Activities.TVGuideMainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ProgrammeScheduleListActivity" />
         </activity>
-
+        <activity android:name="com.facebook.LoginActivity">
+        </activity>
         <service
             android:name=".UpdateService"
             android:enabled="true"
@@ -40,6 +44,7 @@
             android:name=".Contentproviders.TVGuideProvider"
             android:authorities="com.apperall.gabe.tvguide.tvguideprovider"
             android:enabled="true"
+            android:syncable="true"
             android:exported="true" >
         </provider>
 
@@ -48,6 +53,32 @@
             android:enabled="true"
             android:exported="true" >
         </receiver>
+
+
+        <service android:name=".sync.TVGuideAuthenticatorService">
+            <intent-filter>
+                <action android:name="android.accounts.AccountAuthenticator"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.accounts.AccountAuthenticator"
+                android:resource="@xml/authenticator"/>
+
+        </service>
+
+        <service android:name=".sync.TVGuideSyncService"
+            android:exported="true"
+            >
+            <intent-filter>
+                <action android:name="android.content.SyncAdapter"/>
+            </intent-filter>
+            <meta-data
+                android:name="android.content.SyncAdapter"
+                android:resource="@xml/syncadapter"/>
+
+        </service>
+
+
+
     </application>
 
 </manifest>

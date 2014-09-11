@@ -19,6 +19,7 @@ import android.widget.ListView;
 import com.apperall.gabe.tvguide.Constants;
 import com.apperall.gabe.tvguide.Model.Query;
 import com.apperall.gabe.tvguide.R;
+import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
 import com.parse.SaveCallback;
@@ -31,13 +32,13 @@ import java.util.List;
  * A list fragment representing a list of ProgrammeSchedules. This fragment
  * also supports tablet devices by allowing list items to be given an
  * 'activated' state upon selection. This helps indicate which item is
- * currently being viewed in a {@link ProgrammeScheduleDetailFragment}.
+ * currently being viewed in a {@link TVGuideProgrammesFragment}.
  * <p>
  * Activities containing this fragment MUST implement the {@link Callbacks}
  * interface.
  */
-public class ProgrammeScheduleListFragment extends ListFragment {
-    public static final String TAG = ProgrammeScheduleListFragment.class.getSimpleName();
+public class TVGuideSelectionsFragment extends ListFragment {
+    public static final String TAG = TVGuideSelectionsFragment.class.getSimpleName();
 
     private ArrayAdapter<String> mAdapter;
     private String mDisplaymode= Constants.GENRES;
@@ -136,14 +137,14 @@ public class ProgrammeScheduleListFragment extends ListFragment {
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public ProgrammeScheduleListFragment() {
+    public TVGuideSelectionsFragment() {
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Log.i(ProgrammeScheduleListFragment.class.getName(), "onCreate");
+        Log.i(TVGuideSelectionsFragment.class.getName(), "onCreate");
 
 
         List<String>genres = new ArrayList<String>(Arrays.asList(genreStrs));
@@ -185,6 +186,7 @@ public class ProgrammeScheduleListFragment extends ListFragment {
                                 try {
                                     Query queryItem = query.getFirst();
                                     queryItem.unpin();
+                                    queryItem.deleteEventually();
                                 } catch (ParseException e) {
                                     e.printStackTrace();
                                 }
@@ -228,18 +230,22 @@ public class ProgrammeScheduleListFragment extends ListFragment {
             mAdapter.clear();
 
             ParseQuery<Query> query = Query.getQuery();
-            query.fromLocalDatastore();
-            try {
-              List<Query> keywordQueries = query.find();
+  //          query.fromLocalDatastore();
 
-                for (Query item:keywordQueries) {
-                    mAdapter.add(item.getKeyword());
-                }
+            query.findInBackground(new FindCallback<Query>() {
+              @Override
+              public void done(List<Query> queries, ParseException e) {
 
-
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
+                  if (e==null) {
+                      for (Query item : queries) {
+                          mAdapter.add(item.getKeyword());
+                      }
+                      mAdapter.notifyDataSetChanged();
+                  } else {
+                      Log.d(TAG, "parse error: "+e.getMessage());
+                  }
+              }
+          });
 
 
             //mAdapter.addAll(QueryStrs);
@@ -346,6 +352,7 @@ public class ProgrammeScheduleListFragment extends ListFragment {
                                 }
                             }
                         });
+                        query.saveEventually();
 
                     }
                 })

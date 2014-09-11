@@ -1,7 +1,6 @@
 package com.apperall.gabe.tvguide;
 
 import android.content.Context;
-import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import org.json.JSONArray;
@@ -18,7 +17,6 @@ import java.net.URL;
  * Created by gabe on 29/08/14.
  */
 public class TVGuideDataSource {
-    private SQLiteDatabase database;
     private static final String TAG = TVGuideDataSource.class.getName();
 
     private Context mContext;
@@ -58,38 +56,6 @@ public class TVGuideDataSource {
             JSONArray programmeArray =  new JSONArray(responseData);
 
             return programmeArray;
-            /*
-
-
-            Date now = new Date();
-
-            for (int i=0; i<programmeArray.length(); i++) {
-
-                JSONObject jsonObject = programmeArray.getJSONObject(i);
-                if (jsonObject.getBoolean("show")==true) {
-
-                    Programme programme = new Programme();
-
-                    programme.setCategory(jsonObject.getString("category"));
-                    programme.setTitle(jsonObject.getString("title"));
-                    programme.setStart(jsonObject.getString("start"));
-                    programme.setStop(jsonObject.getString("stop"));
-                    programme.set_id(jsonObject.getString("_id"));
-                    programme.setDesc(jsonObject.getString("desc"));
-                    programme.setLength(jsonObject.getInt("length"));
-                    programme.setShow(jsonObject.getBoolean("show"));
-                    programme.setChannel(jsonObject.getString("channel"));
-                    //programme.setUriStr(jsonObject.getString("uri"));
-                    programme.setSource(jsonObject.getString("source"));
-
-
-                    if(programme.getStop().after(now)) {
-
-                        programmes.add(programme);
-                    }
-                }
-            }
-            */
 
         } else {
             Log.i(TAG, "unsuccessful HTTP response: "+responseCode);

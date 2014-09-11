@@ -8,31 +8,38 @@ import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 
 import com.apperall.gabe.tvguide.Constants;
 import com.apperall.gabe.tvguide.R;
-import com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleDetailFragment;
-import com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleListFragment;
+import com.apperall.gabe.tvguide.UI.Fragments.TVGuideProgrammesFragment;
+import com.apperall.gabe.tvguide.UI.Fragments.TVGuideSelectionsFragment;
+import com.apperall.gabe.tvguide.sync.TVGuideSyncAdapter;
+import com.parse.LogInCallback;
+import com.parse.ParseException;
+import com.parse.ParseFacebookUtils;
+import com.parse.ParseUser;
 
 
 /**
  * An activity representing a list of ProgrammeSchedules. This activity
  * has different presentations for handset and tablet-size devices. On
  * handsets, the activity presents a list of items, which when touched,
- * lead to a {@link ProgrammeScheduleDetailActivity} representing
+ * lead to a {@link TVGuideSelectionsActivity} representing
  * item details. On tablets, the activity presents the list of items and
  * item details side-by-side using two vertical panes.
  * <p>
  * The activity makes heavy use of fragments. The list of items is a
- * {@link com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleListFragment} and the item details
- * (if present) is a {@link com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleDetailFragment}.
+ * {@link com.apperall.gabe.tvguide.UI.Fragments.TVGuideSelectionsFragment} and the item details
+ * (if present) is a {@link com.apperall.gabe.tvguide.UI.Fragments.TVGuideProgrammesFragment}.
  * <p>
  * This activity also implements the required
- * {@link com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleListFragment.Callbacks} interface
+ * {@link com.apperall.gabe.tvguide.UI.Fragments.TVGuideSelectionsFragment.Callbacks} interface
  * to listen for item selections.
  */
-public class ProgrammeScheduleListActivity extends Activity
-        implements ProgrammeScheduleListFragment.Callbacks, ActionBar.TabListener {
+public class TVGuideMainActivity extends Activity
+        implements TVGuideSelectionsFragment.Callbacks, ActionBar.TabListener {
 
     /**
      * Whether or not the activity is in two-pane mode, i.e. running on a tablet
@@ -42,7 +49,7 @@ public class ProgrammeScheduleListActivity extends Activity
     private String mSelectionType="Channels";
     private QueryArguments mCallbacks;
     private final static int NUM_TABS = 3;
-
+    private final static String TAG = TVGuideMainActivity.class.getSimpleName();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,13 +59,45 @@ public class ProgrammeScheduleListActivity extends Activity
             if (savedInstanceState.containsKey("selectionType"))
                 mSelectionType = savedInstanceState.getString("selectionType");
         }
-        Log.i(ProgrammeScheduleListActivity.class.getName(), "onCreate, selection type = "+mSelectionType);
+        Log.i(TVGuideMainActivity.class.getName(), "onCreate, selection type = "+mSelectionType);
+       //actionBar.setDisplayShowTitleEnabled(false);
+
+        initTabs();
+
+
+        if (findViewById(R.id.programmeschedule_detail_container) != null) {
+            // The detail container view will be present only in the
+            // large-screen layouts (res/values-large and
+            // res/values-sw600dp). If this view is present, then the
+            // activity should be in two-pane mode.
+            mTwoPane = true;
+
+            // In two-pane mode, list items should be given the
+            // 'activated' state when touched.
+            ((TVGuideSelectionsFragment) getFragmentManager()
+                    .findFragmentById(R.id.programmeschedule_list))
+                    .setActivateOnItemClick(true);
+
+
+            Bundle arguments = new Bundle();
+            arguments.putString(TVGuideProgrammesFragment.ARG_ITEM_ID, "BBC 1");
+            arguments.putString(TVGuideProgrammesFragment.ARG_SELECTION_TYPE, Constants.CHANNELS);
+            TVGuideProgrammesFragment fragment = new TVGuideProgrammesFragment();
+            fragment.setArguments(arguments);
+            getFragmentManager().beginTransaction()
+                    .replace(R.id.programmeschedule_detail_container, fragment)
+                    .commit();
+
+            mCallbacks = (QueryArguments) fragment;
+        }
+
+
+        TVGuideSyncAdapter.initializeSyncAdapter(this);
+    }
+    private void initTabs() {
+        boolean selected = false;
         ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        //actionBar.setDisplayShowTitleEnabled(false);
-
-
-        boolean selected = false;
 
 
         if (mSelectionType.equals(Constants.CHANNELS)) {
@@ -92,40 +131,55 @@ public class ProgrammeScheduleListActivity extends Activity
         tab = actionBar.newTab().setText(Constants.NOW).setTabListener(this);
         actionBar.addTab(tab,3,selected);
 
-
-        if (findViewById(R.id.programmeschedule_detail_container) != null) {
-            // The detail container view will be present only in the
-            // large-screen layouts (res/values-large and
-            // res/values-sw600dp). If this view is present, then the
-            // activity should be in two-pane mode.
-            mTwoPane = true;
-
-            // In two-pane mode, list items should be given the
-            // 'activated' state when touched.
-            ((ProgrammeScheduleListFragment) getFragmentManager()
-                    .findFragmentById(R.id.programmeschedule_list))
-                    .setActivateOnItemClick(true);
-
-
-            Bundle arguments = new Bundle();
-            arguments.putString(ProgrammeScheduleDetailFragment.ARG_ITEM_ID, "BBC 1");
-            arguments.putString(ProgrammeScheduleDetailFragment.ARG_SELECTION_TYPE, Constants.CHANNELS);
-            ProgrammeScheduleDetailFragment fragment = new ProgrammeScheduleDetailFragment();
-            fragment.setArguments(arguments);
-            getFragmentManager().beginTransaction()
-                    .replace(R.id.programmeschedule_detail_container, fragment)
-                    .commit();
-
-            mCallbacks = (QueryArguments) fragment;
-        }
-
-
-        // TODO: If exposing deep links into your app, handle intents here.
     }
-
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putString("selectionType", mSelectionType);
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return false;
+    }
+
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch (item.getItemId())
+        {
+            case R.id.action_login:
+            {
+                ParseFacebookUtils.logIn(this, new LogInCallback() {
+                    @Override
+                    public void done(ParseUser parseUser, ParseException e) {
+                        if (parseUser == null) {
+                            Log.d(TAG, "user cancelled fb login");
+                        } else if (parseUser.isNew()) {
+                            Log.d(TAG, "user signed up and logged in through fb");
+                        } else {
+                            Log.d(TAG, "user logged in through fb");
+                        }
+                    }
+                });
+
+                return true;
+            }
+            case R.id.action_refresh:
+                TVGuideSyncAdapter.syncImmediately(this);
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        ParseFacebookUtils.finishAuthentication(requestCode, resultCode, data);
     }
 
     @Override
@@ -135,7 +189,7 @@ public class ProgrammeScheduleListActivity extends Activity
 
 
         FragmentManager fm = getFragmentManager();
-        ProgrammeScheduleListFragment listFragment = (ProgrammeScheduleListFragment) fm.findFragmentById(R.id.programmeschedule_list);
+        TVGuideSelectionsFragment listFragment = (TVGuideSelectionsFragment) fm.findFragmentById(R.id.programmeschedule_list);
         boolean shouldShowFragment = true;
         if (tabText.equals(Constants.GENRES)) {
             mSelectionType = Constants.GENRES;
@@ -186,7 +240,7 @@ public class ProgrammeScheduleListActivity extends Activity
    // }
 
     /**
-     * Callback method from {@link ProgrammeScheduleListFragment.Callbacks}
+     * Callback method from {@link com.apperall.gabe.tvguide.UI.Fragments.TVGuideSelectionsFragment.Callbacks}
      * indicating that the item with the given ID was selected.
      */
     @Override
@@ -197,8 +251,8 @@ public class ProgrammeScheduleListActivity extends Activity
             // adding or replacing the detail fragment using a
             // fragment transaction.
             Bundle arguments = new Bundle();
-            arguments.putString(ProgrammeScheduleDetailFragment.ARG_ITEM_ID, id);
-            arguments.putString(ProgrammeScheduleDetailFragment.ARG_SELECTION_TYPE, mSelectionType);
+            arguments.putString(TVGuideProgrammesFragment.ARG_ITEM_ID, id);
+            arguments.putString(TVGuideProgrammesFragment.ARG_SELECTION_TYPE, mSelectionType);
             //ProgrammeScheduleDetailFragment fragment = new ProgrammeScheduleDetailFragment();
             //getFragmentManager().beginTransaction()
             //        .replace(R.id.programmeschedule_detail_container, fragment)
@@ -213,9 +267,9 @@ public class ProgrammeScheduleListActivity extends Activity
         } else {
             // In single-pane mode, simply start the detail activity
             // for the selected item ID.
-            Intent detailIntent = new Intent(this, ProgrammeScheduleDetailActivity.class);
-            detailIntent.putExtra(ProgrammeScheduleDetailFragment.ARG_ITEM_ID, id);
-            detailIntent.putExtra(ProgrammeScheduleDetailFragment.ARG_SELECTION_TYPE, mSelectionType);
+            Intent detailIntent = new Intent(this, TVGuideSelectionsActivity.class);
+            detailIntent.putExtra(TVGuideProgrammesFragment.ARG_ITEM_ID, id);
+            detailIntent.putExtra(TVGuideProgrammesFragment.ARG_SELECTION_TYPE, mSelectionType);
             startActivity(detailIntent);
         }
     }

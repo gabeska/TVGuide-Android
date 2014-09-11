@@ -8,21 +8,21 @@ import android.view.MenuItem;
 
 import com.apperall.gabe.tvguide.Model.Programme;
 import com.apperall.gabe.tvguide.R;
-import com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleDetailFragment;
+import com.apperall.gabe.tvguide.UI.Fragments.TVGuideProgrammesFragment;
 
 
 /**
  * An activity representing a single ProgrammeSchedule detail screen. This
  * activity is only used on handset devices. On tablet-size devices,
  * item details are presented side-by-side with a list of items
- * in a {@link ProgrammeScheduleListActivity}.
+ * in a {@link TVGuideMainActivity}.
  * <p>
  * This activity is mostly just a 'shell' activity containing nothing
- * more than a {@link com.apperall.gabe.tvguide.UI.Fragments.ProgrammeScheduleDetailFragment}.
+ * more than a {@link com.apperall.gabe.tvguide.UI.Fragments.TVGuideProgrammesFragment}.
  */
-public class ProgrammeScheduleDetailActivity extends Activity {
+public class TVGuideSelectionsActivity extends Activity {
 
-
+    private static final String TAG = TVGuideSelectionsActivity.class.getSimpleName();
     private Programme mProgramme;
 
     public Programme getProgramme() {
@@ -55,27 +55,27 @@ public class ProgrammeScheduleDetailActivity extends Activity {
             // Create the detail fragment and add it to the activity
             // using a fragment transaction.
             Bundle arguments = new Bundle();
-            arguments.putString(ProgrammeScheduleDetailFragment.ARG_ITEM_ID,
-                    getIntent().getStringExtra(ProgrammeScheduleDetailFragment.ARG_ITEM_ID));
+            arguments.putString(TVGuideProgrammesFragment.ARG_ITEM_ID,
+                    getIntent().getStringExtra(TVGuideProgrammesFragment.ARG_ITEM_ID));
 
-            arguments.putString(ProgrammeScheduleDetailFragment.ARG_SELECTION_TYPE,
-                    getIntent().getStringExtra(ProgrammeScheduleDetailFragment.ARG_SELECTION_TYPE));
+            arguments.putString(TVGuideProgrammesFragment.ARG_SELECTION_TYPE,
+                    getIntent().getStringExtra(TVGuideProgrammesFragment.ARG_SELECTION_TYPE));
 
-            ProgrammeScheduleDetailFragment fragment = new ProgrammeScheduleDetailFragment();
+            TVGuideProgrammesFragment fragment = new TVGuideProgrammesFragment();
             fragment.setArguments(arguments);
             getFragmentManager().beginTransaction()
                     .add(R.id.programmeschedule_detail_container, fragment)
                     .commit();
 
 
-            getActionBar().setTitle(getIntent().getStringExtra(ProgrammeScheduleDetailFragment.ARG_ITEM_ID));
+            getActionBar().setTitle(getIntent().getStringExtra(TVGuideProgrammesFragment.ARG_ITEM_ID));
 
         }
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        Log.i("scheduleDetailActivity", "onOptionsItemSelected");
+        Log.i(TAG, "onOptionsItemSelected");
         int id = item.getItemId();
         if (id == android.R.id.home) {
             // This ID represents the Home or Up button. In the case of this
@@ -84,7 +84,7 @@ public class ProgrammeScheduleDetailActivity extends Activity {
             //
             // http://developer.android.com/design/patterns/navigation.html#up-vs-back
             //
-            navigateUpTo(new Intent(this, ProgrammeScheduleListActivity.class));
+            navigateUpTo(new Intent(this, TVGuideMainActivity.class));
             return true;
         }
         return super.onOptionsItemSelected(item);

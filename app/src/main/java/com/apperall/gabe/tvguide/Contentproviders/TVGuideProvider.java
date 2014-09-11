@@ -13,6 +13,7 @@ public class TVGuideProvider extends ContentProvider {
     public static final Uri CONTENT_URI = Uri.parse("content://com.apperall.gabe.tvguide.tvguideprovider");
     public static final String SINGLE_RECORD_MIME_TYPE = "vnd.android.cursor.item/vnd.gabe.tvguide.programme";
     public static final String MULTIPLE_RECORDS_MIME_TYPE = "vnd.android.cursor.dir/vnd.gabe.tvguide.programmes";
+    private static final String TAG = TVGuideProvider.class.getSimpleName();
 
     private TVGuideDbHelper dbHelper;
 
@@ -21,6 +22,7 @@ public class TVGuideProvider extends ContentProvider {
         final SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         int nDeleted = db.delete(dbHelper.TABLE_PROGRAMMES, selection, selectionArgs );
+        Log.i(TAG, "deleted "+ nDeleted+" programmes");
         getContext().getContentResolver().notifyChange(uri,null);
         return nDeleted;
     }
@@ -62,6 +64,7 @@ public class TVGuideProvider extends ContentProvider {
                 if (_id!=-1) {
                     returnCount++;
                 }
+                db.yieldIfContendedSafely();
             }
             db.setTransactionSuccessful();
         } finally {

@@ -4,4 +4,7 @@
     <string name="app_name">TVGuide</string>
     <string name="title_programmeschedule_detail">ProgrammeSchedule Detail</string>
 
+
+    <string name="sync_account_type">tvguide.gabe.apperall.com</string>
+    <string name="content_authority">com.apperall.gabe.tvguide.tvguideprovider</string>
 </resources>

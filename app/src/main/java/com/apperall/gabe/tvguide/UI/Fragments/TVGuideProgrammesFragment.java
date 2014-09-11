@@ -6,16 +6,20 @@ import android.app.FragmentManager;
 import android.app.ListFragment;
 import android.app.LoaderManager;
 import android.app.PendingIntent;
+import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
 import android.content.Loader;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.SearchView;
@@ -26,7 +30,7 @@ import com.apperall.gabe.tvguide.Model.Programme;
 import com.apperall.gabe.tvguide.Adapters.ProgrammeCursorAdapter;
 import com.apperall.gabe.tvguide.R;
 import com.apperall.gabe.tvguide.Contentproviders.TVGuideProvider;
-import com.apperall.gabe.tvguide.UI.Activities.ProgrammeScheduleListActivity;
+import com.apperall.gabe.tvguide.UI.Activities.TVGuideMainActivity;
 import com.apperall.gabe.tvguide.UpdateService;
 import com.apperall.gabe.tvguide.Broadcastreceivers.WakefulUpdateReceiver;
 
@@ -34,12 +38,12 @@ import java.util.Date;
 
 /**
  * A fragment representing a single ProgrammeSchedule detail screen.
- * This fragment is either contained in a {@link com.apperall.gabe.tvguide.UI.Activities.ProgrammeScheduleListActivity}
- * in two-pane mode (on tablets) or a {@link com.apperall.gabe.tvguide.UI.Activities.ProgrammeScheduleDetailActivity}
+ * This fragment is either contained in a {@link com.apperall.gabe.tvguide.UI.Activities.TVGuideMainActivity}
+ * in two-pane mode (on tablets) or a {@link com.apperall.gabe.tvguide.UI.Activities.TVGuideSelectionsActivity}
  * on handsets.
  */
-public class ProgrammeScheduleDetailFragment extends ListFragment implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor>,
-        ProgrammeScheduleListActivity.QueryArguments, SearchView.OnQueryTextListener{
+public class TVGuideProgrammesFragment extends ListFragment implements AdapterView.OnItemClickListener, LoaderManager.LoaderCallbacks<Cursor>,
+        TVGuideMainActivity.QueryArguments, SearchView.OnQueryTextListener{
 
 
     /**
@@ -48,7 +52,7 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
      */
     public static final String ARG_ITEM_ID = "item_id";
     public static final String ARG_SELECTION_TYPE = "selection_type";
-    private static final String TAG = ProgrammeScheduleDetailFragment.class.getName();
+    private static final String TAG = TVGuideProgrammesFragment.class.getSimpleName();
     //private ProgressDialog pd;
     private static final int DATA_LOADER = 1;
     private String sortKey = "start ASC";
@@ -79,7 +83,7 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public ProgrammeScheduleDetailFragment() {
+    public TVGuideProgrammesFragment() {
     }
 
     @Override
@@ -93,6 +97,7 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
             mSelectionType = (getArguments().getString(ARG_SELECTION_TYPE));
         }
         setHasOptionsMenu(true);
+
     }
 
     private Bundle makeLoaderBundle() {
@@ -124,13 +129,21 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
 
         this.getListView().setAdapter(mAdapter);
 
-        getListView().setOnItemClickListener(ProgrammeScheduleDetailFragment.this);
+        getListView().setOnItemClickListener(TVGuideProgrammesFragment.this);
+        setHasOptionsMenu(true);
 
 
 
 //        mListView.setOnItemClickListener(this);
         //refreshProgrammes();
 
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        setHasOptionsMenu(true);
+
+        return super.onCreateView(inflater, container, savedInstanceState);
     }
 
     @Override
@@ -171,7 +184,7 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
         } else if (bundle.containsKey("category")) {
             selection = "category = '"+bundle.getString("category")+ "'";
         } else if (bundle.containsKey("query")) {
-            selection = "title LIKE '%"+bundle.getString("query")+"%' OR desc LIKE '%"+bundle.getString("query")+"%'";
+            selection = "(title LIKE '%"+bundle.getString("query")+"%' OR desc LIKE '%"+bundle.getString("query")+"%')";
         } else if (bundle.containsKey(Constants.NOW)) {
             selection = "start < "+now.getTime();
             sortKey = "channel ASC";
@@ -271,6 +284,7 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
+        Log.i(TAG, "onOptionsItemSelected");
         switch (item.getItemId()) {
             case R.id.action_sort_Channel:
                 sortKey = "channel ASC";
@@ -328,7 +342,12 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
         if (query.length()<3) {
             return false;
         }
-        mSelectionType = "Queries";
+
+        InputMethodManager imm = (InputMethodManager)getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getView().getWindowToken(),0);
+
+
+        mSelectionType = Constants.QUERIES;
         mItem = query;
 
         getLoaderManager().restartLoader(DATA_LOADER, makeLoaderBundle(), this);
@@ -341,7 +360,7 @@ public class ProgrammeScheduleDetailFragment extends ListFragment implements Ada
     @Override
     public boolean onQueryTextChange(String newText) {
         //Log.i(TAG, "onQueryTextChange");
-        return false;
+        return true;
     }
 
     @Override

@@ -22,7 +22,7 @@ import java.util.Calendar;
 public class ProgrammeDialogFragment extends DialogFragment implements View.OnClickListener {
 
     private Programme mProgramme;
-    public static final String TAG = ProgrammeDialogFragment.class.getName();
+    public static final String TAG = ProgrammeDialogFragment.class.getSimpleName();
     public Programme getProgramme() {
         return mProgramme;
     }
