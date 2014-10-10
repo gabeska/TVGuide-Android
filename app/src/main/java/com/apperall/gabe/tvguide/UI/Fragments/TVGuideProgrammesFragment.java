@@ -333,9 +333,6 @@ public class TVGuideProgrammesFragment extends ListFragment implements AdapterVi
     }
 
 
-
-
-
     @Override
     public boolean onQueryTextSubmit(String query) {
         Log.i(TAG, "onQueryTextSubmit: "+query);
@@ -412,11 +409,14 @@ public class TVGuideProgrammesFragment extends ListFragment implements AdapterVi
         dialogFragment.setProgramme(programme);
         FragmentManager fm = getFragmentManager();
         //Dialog dialog =  dialogFragment.getDialog();
-        dialogFragment.setStyle(DialogFragment.STYLE_NO_TITLE,0);
+        dialogFragment.setStyle(DialogFragment.STYLE_NORMAL,0);
 
         // dialog.setTitle(programme.getTitle());
-        dialogFragment.show(fm, "programmeDialog");
+       // dialogFragment.show(fm, "programmeDialog");
+        DialogFragment frugment = TestDialogFragment.newInstance(programme.get_id(), programme.getTitle(),
+                programme.getChannel(), programme.getStart(), programme.getStop(), programme.getDesc());
 
+        frugment.show(getFragmentManager(), "tagomago");
     }
 
 

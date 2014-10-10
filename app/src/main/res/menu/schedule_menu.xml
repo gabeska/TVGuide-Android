@@ -8,10 +8,6 @@
         android:showAsAction="collapseActionView|ifRoom"
         android:actionViewClass="android.widget.SearchView"/>
 
-
-
-
-
     <item
         android:id="@+id/action_sort_Title"
         android:orderInCategory="100"

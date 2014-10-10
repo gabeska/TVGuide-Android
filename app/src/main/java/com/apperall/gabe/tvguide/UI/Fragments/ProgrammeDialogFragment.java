@@ -27,6 +27,11 @@ public class ProgrammeDialogFragment extends DialogFragment implements View.OnCl
         return mProgramme;
     }
 
+
+   public void ProgrammeDialogFragment(Programme programme) {
+       mProgramme = programme;
+   }
+
     public void setProgramme(Programme mProgramme) {
 
         this.mProgramme = mProgramme;

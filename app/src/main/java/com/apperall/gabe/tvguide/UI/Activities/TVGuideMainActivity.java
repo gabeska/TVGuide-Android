@@ -149,56 +149,13 @@ public class TVGuideMainActivity extends Activity
 
         switch (item.getItemId())
         {
-            case R.id.action_login:
-            {
-                ParseFacebookUtils.logIn(this, new LogInCallback() {
-                    @Override
-                    public void done(ParseUser parseUser, ParseException e) {
-                        if (parseUser == null) {
-                            Log.d(TAG, "user cancelled fb login");
-                            Log.i(TAG, "fb error: "+e.getMessage());
-                            Log.i(TAG, "fb ook error: "+e.getLocalizedMessage());
 
-                        } else if (parseUser.isNew()) {
-                            Log.d(TAG, "user signed up and logged in through fb");
-                        } else {
-                            Log.d(TAG, "user logged in through fb");
-                        }
-                    }
-                });
-
-                return true;
-            }
             case R.id.action_refresh:
                 TVGuideSyncAdapter.syncImmediately(this);
                 return true;
 
             default:
                 return false;
-        }
-    }
-
-
-    private void login() {
-        ParseUser currentUser = ParseUser.getCurrentUser();
-        if (currentUser!=null) {
-            Log.i(TAG, "already loggin in");
-        } else {
-            ParseFacebookUtils.logIn(this, new LogInCallback() {
-                @Override
-                public void done(ParseUser parseUser, ParseException e) {
-                    if (parseUser == null) {
-                        Log.d(TAG, "user cancelled fb login");
-                        Log.i(TAG, "fb error: "+e.getMessage());
-                        Log.i(TAG, "fb ook error: "+e.getLocalizedMessage());
-
-                    } else if (parseUser.isNew()) {
-                        Log.d(TAG, "user signed up and logged in through fb");
-                    } else {
-                        Log.d(TAG, "user logged in through fb");
-                    }
-                }
-            });
         }
     }
 
