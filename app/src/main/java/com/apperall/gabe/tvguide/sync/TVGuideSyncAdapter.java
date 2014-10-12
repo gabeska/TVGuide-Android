@@ -10,6 +10,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SyncRequest;
 import android.content.SyncResult;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
@@ -60,6 +62,24 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
 
         //updateChannels(); // TODO: nadenken over waar/wanneer dit moet gebeuren
 
+        boolean syncOnWifiOnly = true; // todo: uit extras halen
+
+        if (syncOnWifiOnly) {
+            ConnectivityManager cm = (ConnectivityManager)getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo info  = cm.getActiveNetworkInfo();
+            if (info.getType()==ConnectivityManager.TYPE_WIFI) {
+                Log.i(TAG, "syncing on wifi");
+            } else {
+                Log.i(TAG, "not on wifi, delaying sync");
+
+                syncResult.delayUntil=30*60; // 30 minutes
+
+
+                return;
+            }
+        }
+
+
         JSONArray programmeArray = refreshProgrammes();
         if (programmeArray != null && programmeArray.length()>0) {
 
@@ -73,7 +93,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
             for (int i = 0; i < programmeArray.length(); i++) {
                 try {
                     JSONObject jsonObject = programmeArray.getJSONObject(i);
-                    if (jsonObject.getBoolean("show") == true) {
+                    if (jsonObject.getBoolean("show")) {
 
                         Programme programme = new Programme();
 
@@ -144,7 +164,9 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
         Log.i(TAG,"refreshProgrammes");
         try {
 
-            URL programmesURL = new URL("http://192.168.0.42:4000/programmes");
+           // URL programmesURL = new URL("http://192.168.0.42:4000/programmes");
+            URL programmesURL = new URL("https://dl.dropboxusercontent.com/u/9123590/programmes.json");
+            // TODO: optie maken om alleen op wifi te syncen!
 
             HttpURLConnection connection = (HttpURLConnection) programmesURL.openConnection();
 

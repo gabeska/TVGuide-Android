@@ -19,6 +19,13 @@ import android.widget.ListView;
 import com.apperall.gabe.tvguide.Constants;
 import com.apperall.gabe.tvguide.Model.Query;
 import com.apperall.gabe.tvguide.R;
+import com.dropbox.sync.android.DbxAccountManager;
+import com.dropbox.sync.android.DbxDatastore;
+import com.dropbox.sync.android.DbxDatastoreManager;
+import com.dropbox.sync.android.DbxException;
+import com.dropbox.sync.android.DbxFields;
+import com.dropbox.sync.android.DbxRecord;
+import com.dropbox.sync.android.DbxTable;
 import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
@@ -26,6 +33,9 @@ import com.parse.SaveCallback;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -39,7 +49,12 @@ import java.util.List;
  */
 public class TVGuideSelectionsFragment extends ListFragment {
     public static final String TAG = TVGuideSelectionsFragment.class.getSimpleName();
+    private DbxAccountManager mAccountManager;
+    private DbxDatastoreManager mDatastoreManager;
+    private DbxDatastore mDataStore;
 
+    private static final String APP_KEY = "1gcb7qc9cejlxml";
+    private static final String APP_SECRET = "8627e2gpg6reb40";
     private ArrayAdapter<String> mAdapter;
     private String mDisplaymode= Constants.GENRES;
     /**
@@ -94,10 +109,11 @@ public class TVGuideSelectionsFragment extends ListFragment {
             "RTL 5",
             "RTL 7",
             "Discovery Channel",
-            "Travel Channel"
+            "Travel Channel",
+            "RTV Rijnmond"
     };
 
-    private static final String[]QueryStrs = {
+    private static final String[]queryStrs = {
             "Rotterdam",
             "history",
             "clarkson",
@@ -145,7 +161,24 @@ public class TVGuideSelectionsFragment extends ListFragment {
         super.onCreate(savedInstanceState);
 
         Log.i(TVGuideSelectionsFragment.class.getName(), "onCreate");
+        mAccountManager = DbxAccountManager.getInstance(getActivity().getApplicationContext(), APP_KEY, APP_SECRET);
 
+        if (mAccountManager.hasLinkedAccount()) {
+            try {
+                mDatastoreManager = DbxDatastoreManager.forAccount(mAccountManager.getLinkedAccount());
+            } catch (DbxException.Unauthorized e) {
+                Log.i("dropboxerror", "Account was unlinked remotely");
+            }
+        }
+        if (mDatastoreManager==null) {
+            mDatastoreManager = DbxDatastoreManager.localManager(mAccountManager);
+        }
+
+        try {
+            mDataStore = mDatastoreManager.openDefaultDatastore();
+        } catch (DbxException e ) {
+            Log.e("dropbox", "error opening datastore: "+e.getMessage());
+        }
 
         List<String>genres = new ArrayList<String>(Arrays.asList(genreStrs));
         mAdapter = new ArrayAdapter<String>(getActivity(), android.R.layout.simple_list_item_activated_1,
@@ -210,6 +243,19 @@ public class TVGuideSelectionsFragment extends ListFragment {
 
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mDataStore.close();
+
+    }
+
     public void setDisplaymode(String displaymode) {
         Log.i(TAG, "setDisplaymode: "+displaymode);
         mDisplaymode = displaymode;
@@ -229,7 +275,7 @@ public class TVGuideSelectionsFragment extends ListFragment {
             this.getListView().setLongClickable(true);
 
             mAdapter.clear();
-
+            /*
             ParseQuery<Query> query = Query.getQuery();
             query.fromLocalDatastore();
 
@@ -247,10 +293,33 @@ public class TVGuideSelectionsFragment extends ListFragment {
                   }
               }
           });
+*/
+            try {
 
 
-            //mAdapter.addAll(QueryStrs);
+
+            DbxTable queriesTable = mDataStore.getTable("storedQueries");
+            DbxTable.QueryResult results = queriesTable.query();
+
+            List<DbxRecord> resultsList = results.asList();
+            Collections.sort(resultsList, new Comparator<DbxRecord>() {
+                @Override
+                public int compare(DbxRecord lhs, DbxRecord rhs) {
+                    return (lhs.getString("query").compareTo(rhs.getString("query")));
+                }
+            });
+
+                Iterator<DbxRecord> resultsIterator = results.iterator();
+            while (resultsIterator.hasNext()) {
+                mAdapter.add(resultsIterator.next().getString("query"));
+            }
+
+
+            //mAdapter.addAll(queryStrs);
             mAdapter.notifyDataSetChanged();
+        } catch (DbxException e) {
+                Log.e(TAG, "error retrieving stored queries: "+e.getMessage());
+            }
         } else if (mDisplaymode.equals(Constants.NOW)) {
             mCallbacks.onItemSelected(Constants.NOW);
         }
@@ -340,6 +409,31 @@ public class TVGuideSelectionsFragment extends ListFragment {
                 .setPositiveButton("Add", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+
+
+                        DbxFields queryFields = new DbxFields();
+                        queryFields.set("query", input.getText().toString());
+                        // todo: query-bouw-dialog maken
+                        // todo: query aparte naam en selectie geven (als uitgeslapen)
+                        DbxTable queriesTable = mDataStore.getTable("storedQueries");
+
+                        try {
+                            if (queriesTable.query(queryFields).hasResults()) {
+                                // ?
+                                Log.i(TAG,"keyword already in searches, not inserted");
+                            } else {
+                                queriesTable.insert(queryFields);
+                                mAdapter.add( input.getText().toString());
+                                mDataStore.sync();
+                                mAdapter.notifyDataSetChanged();
+                            }
+
+
+
+                        } catch (DbxException e) {
+
+                        }
+  /*
                         Query query = new Query();
                         query.setUuidString();
                         final String item = input.getText().toString();
@@ -354,7 +448,7 @@ public class TVGuideSelectionsFragment extends ListFragment {
                             }
                         });
                         query.saveEventually();
-
+*/
                     }
                 })
                 .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {

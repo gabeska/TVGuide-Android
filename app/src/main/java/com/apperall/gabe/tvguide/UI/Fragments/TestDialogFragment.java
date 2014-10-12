@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.provider.CalendarContract;
 import android.support.annotation.Nullable;
+import android.text.method.ScrollingMovementMethod;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +16,13 @@ import android.widget.Button;
 import android.widget.TextView;
 
 import com.apperall.gabe.tvguide.R;
+import com.dropbox.sync.android.DbxAccountManager;
+import com.dropbox.sync.android.DbxDatastore;
+import com.dropbox.sync.android.DbxDatastoreManager;
+import com.dropbox.sync.android.DbxException;
+import com.dropbox.sync.android.DbxFields;
+import com.dropbox.sync.android.DbxRecord;
+import com.dropbox.sync.android.DbxTable;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -29,6 +38,13 @@ public class TestDialogFragment extends DialogFragment {
     private Date mStart;
     private Date mStop;
     private String mDesc;
+
+    private DbxAccountManager mAccountManager;
+    private DbxDatastoreManager mDatastoreManager;
+    private DbxDatastore mDataStore;
+
+    private static final String APP_KEY = "1gcb7qc9cejlxml";
+    private static final String APP_SECRET = "8627e2gpg6reb40";
 
 
     public static TestDialogFragment newInstance(String programmeId, String title,
@@ -51,7 +67,27 @@ public class TestDialogFragment extends DialogFragment {
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         AlertDialog.Builder timeDialog = new AlertDialog.Builder(getActivity());
 
-        timeDialog.setTitle("Programme Details");
+        mAccountManager = DbxAccountManager.getInstance(getActivity().getApplicationContext(), APP_KEY, APP_SECRET);
+
+        if (mAccountManager.hasLinkedAccount()) {
+            try {
+                mDatastoreManager = DbxDatastoreManager.forAccount(mAccountManager.getLinkedAccount());
+            } catch (DbxException.Unauthorized e) {
+                Log.i("dropboxerror", "Account was unlinked remotely");
+            }
+        }
+        if (mDatastoreManager==null) {
+            mDatastoreManager = DbxDatastoreManager.localManager(mAccountManager);
+        }
+
+        try {
+            mDataStore = mDatastoreManager.openDefaultDatastore();
+        } catch (DbxException e ) {
+            Log.e("dropbox", "error opening datastore: "+e.getMessage());
+        }
+
+
+            timeDialog.setTitle("Programme Details");
 
         mStart = (Date)getArguments().getSerializable("start");
         mStop = (Date)getArguments().getSerializable("stop");
@@ -74,6 +110,7 @@ public class TestDialogFragment extends DialogFragment {
 
         tvTitle.setText(mTitle);
         tvDesc.setText(mDesc);
+        tvDesc.setMovementMethod(new ScrollingMovementMethod());
         tvChannel.setText(mChannel);
         DateFormat format = new SimpleDateFormat("EE dd MMM");
         DateFormat timeFormat = new SimpleDateFormat("HH:mm");
@@ -98,10 +135,67 @@ public class TestDialogFragment extends DialogFragment {
             }
         });
 
+        Button hideButton = (Button)v.findViewById(R.id.progDlgBtnHide);
+        hideButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("hide","onclick");
+
+                try {
+
+                    DbxTable programmesToHideTbl = mDataStore.getTable("programmesToHide");
+                    DbxFields fields = new DbxFields();
+                    fields.set("title", mTitle);
+                    // DbxRecord programme = programmesToHideTbl. insert().set("title", mTitle);
+                    if (!programmesToHideTbl.query(fields).hasResults()) { // don't insert if already in table
+
+                        DbxRecord programme = programmesToHideTbl.insert(fields);
+
+                        mDataStore.sync();
+                        Log.i("propbox", " inserted: "+mTitle);
+
+                    } else {
+                        Log.i("propbox", "already in table, not inserted: "+mTitle);
+                    }
+                        Log.i("hide", "synced?");
+                } catch (DbxException e) {
+                    Log.e("dropbox","error storing programme: "+e.getMessage());
+                }
+
+            }
+        });
+
+        Button infoButton = (Button)v.findViewById(R.id.progDlgBtnMoreInfo);
+        infoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Log.i("info","onclick");
+
+                try {
+                    DbxTable programmesToHideTbl = mDataStore.getTable("programmesToHide");
+                    DbxTable.QueryResult results = programmesToHideTbl.query();
+
+                    //DbxRecord programmeRecord = results.iterator();
+                    for (DbxRecord record: results.asList()) {
+                        Log.i("programme", record.getString("title"));
+                    }
+
+                }  catch (DbxException e) {
+                    Log.e("dropbox","error storing programme: "+e.getMessage());
+                }
+            }
+        });
         //timeDialog.setMessage(getArguments().getString("bla"));
         return timeDialog.create();
     }
 
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        Log.i("propbox", "onDestroyView");
+       if (mDataStore!=null) mDataStore.close();
+
+    }
 
 /*
     @Override
