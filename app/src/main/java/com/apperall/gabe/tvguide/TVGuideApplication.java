@@ -12,7 +12,8 @@ import com.parse.ParseUser;
  */
 public class TVGuideApplication extends Application {
     public static final String TAG = TVGuideApplication.class.getName();
-
+    public static final String APP_KEY = "1gcb7qc9cejlxml";
+    public static final String APP_SECRET = "8627e2gpg6reb40";
     private TVGuideDataSource dataSource;
 
     @Override

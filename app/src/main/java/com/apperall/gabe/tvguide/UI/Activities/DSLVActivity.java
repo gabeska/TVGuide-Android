@@ -1,59 +1,43 @@
 package com.apperall.gabe.tvguide.UI.Activities;
 
 import android.app.ListActivity;
+import android.content.ContentResolver;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Log;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.CheckedTextView;
-import android.widget.TextView;
 
+import com.apperall.gabe.tvguide.Contentproviders.TVGuideProvider;
+import com.apperall.gabe.tvguide.Model.Channel;
 import com.apperall.gabe.tvguide.R;
-import com.apperall.gabe.tvguide.UI.DSLV.DragSortItemViewCheckable;
 import com.apperall.gabe.tvguide.UI.DSLV.DragSortListView;
-import com.dropbox.sync.android.DbxAccountManager;
-import com.dropbox.sync.android.DbxDatastore;
-import com.dropbox.sync.android.DbxDatastoreManager;
-import com.dropbox.sync.android.DbxException;
-import com.dropbox.sync.android.DbxRecord;
-import com.dropbox.sync.android.DbxTable;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 
 public class DSLVActivity extends ListActivity {
 
 
     ArrayAdapter<String> adapter;
 
-    private DragSortListView.DropListener onDrop = new DragSortListView.DropListener()
-    {
-        @Override
-        public void drop(int from, int to)
-        {
-            if (from != to)
-            {
-                DragSortListView list = (DragSortListView)getListView();
-                String item = adapter.getItem(from);
-                adapter.remove(item);
-                adapter.insert(item, to);
+    private DragSortListView.DropListener onDrop =
+            new DragSortListView.DropListener() {
+                @Override
+                public void drop(int from, int to) {
+                    if (from != to) {
+                        DragSortListView list = getListView();
+                        String item = adapter.getItem(from);
+                        adapter.remove(item);
+                        adapter.insert(item, to);
+                        list.moveCheckState(from, to);
+                    }
+                }
+            };
 
-                list.moveCheckState(from,to);
 
-            }
-        }
-    };
-
-    private DragSortListView.RemoveListener onRemove = new DragSortListView.RemoveListener()
-    {
-        @Override
-        public void remove(int which)
-        {
-            adapter.remove(adapter.getItem(which));
-        }
-    };
 
 
     @Override
@@ -64,10 +48,25 @@ public class DSLVActivity extends ListActivity {
 
         //String[] names = new String[];
         ArrayList<String> names = new ArrayList<String>();
-        final String APP_KEY = "1gcb7qc9cejlxml";
-        final String APP_SECRET = "8627e2gpg6reb40";
-        DbxAccountManager accountManager =  DbxAccountManager.getInstance(getApplicationContext(), APP_KEY, APP_SECRET);
+        ContentResolver resolver = getApplicationContext().getContentResolver();
+        Cursor channelCursor =  resolver.query(TVGuideProvider.CHANNEL_CONTENT_URI, null, null, null, null);
 
+       if (channelCursor.moveToFirst()) {
+           do {
+
+               // testje
+               names.add(channelCursor.getString(channelCursor.getColumnIndex(Channel.C_CHANNEL_NAME)));
+
+
+           } while (channelCursor.moveToNext());
+       }
+        if(channelCursor!=null) channelCursor.close();
+
+
+
+        //DbxAccountManager accountManager =  DbxAccountManager.getInstance(getApplicationContext(),
+         //       TVGuideApplication. APP_KEY,TVGuideApplication.APP_SECRET);
+/*
         DbxDatastore datastore=null;
         try {
             datastore = DbxDatastoreManager.localManager(accountManager).openDefaultDatastore();
@@ -86,44 +85,50 @@ public class DSLVActivity extends ListActivity {
         } finally {
             if (datastore!=null) datastore.close();
         }
-
+*/
 
         adapter = new ArrayAdapter<String>(this,
                 R.layout.list_item_checkable, R.id.text, names);
 
         setListAdapter(adapter);
 
-        final DragSortListView list= (DragSortListView)getListView();
+        final DragSortListView list= getListView();
         LayoutInflater inflater = getLayoutInflater();
-        TextView headerView = (TextView) inflater.inflate(R.layout.header_footer, null);
-        headerView.setText("Channels");
+       // TextView headerView = (TextView) inflater.inflate(R.layout.header_footer, null);
+       // headerView.setText("Channels");
 
-        list.addHeaderView(headerView);
+        //list.addHeaderView(headerView);
         //listView.setAdapter(adapter);
         list.setDropListener(onDrop);
-        list.setRemoveListener(onRemove);
 
         Button goBtn = (Button)findViewById(R.id.testDslv);
         goBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
 
-                for (int i=0; i< list.getCount() ; i++) {
-                  //  Log.i("dslv", list.getItem(i));
-                    if (list.getChildAt(i) instanceof  DragSortItemViewCheckable) {
-                        DragSortItemViewCheckable view = (DragSortItemViewCheckable) list.getChildAt(i);
-                        CheckedTextView tv = (CheckedTextView) view.findViewById(R.id.text);
-                        Log.i("dslv", "item:" + tv.getText() + " tv_checked: " + tv.isChecked() + " dragsortitem  checked: " + view.isChecked());
+
+                SparseBooleanArray checkedItemPositions = list.getCheckedItemPositions();
+                int key=0;
+                for (int i=0; i < checkedItemPositions.size();  i++) {
+
+                    if (checkedItemPositions.valueAt(i)) {
+                    key = checkedItemPositions.keyAt(i);
+
+                        String item = adapter.getItem(key);
+                        Log.i("dslv", item + " is at pos: "+(key));
                     }
                 }
-                Log.i("dslv", "#checked: " +list.getCheckedItemCount());
 
+                Log.i("dslv", "#checked: " +list.getCheckedItemCount());
 
             }
         });
 
     }
 
-
+    @Override
+    public DragSortListView getListView() {
+        return (DragSortListView) super.getListView();
+    }
 
 }

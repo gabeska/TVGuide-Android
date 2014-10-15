@@ -19,6 +19,7 @@ import android.widget.ListView;
 import com.apperall.gabe.tvguide.Constants;
 import com.apperall.gabe.tvguide.Model.Query;
 import com.apperall.gabe.tvguide.R;
+import com.apperall.gabe.tvguide.TVGuideApplication;
 import com.dropbox.sync.android.DbxAccountManager;
 import com.dropbox.sync.android.DbxDatastore;
 import com.dropbox.sync.android.DbxDatastoreManager;
@@ -26,10 +27,8 @@ import com.dropbox.sync.android.DbxException;
 import com.dropbox.sync.android.DbxFields;
 import com.dropbox.sync.android.DbxRecord;
 import com.dropbox.sync.android.DbxTable;
-import com.parse.FindCallback;
 import com.parse.ParseException;
 import com.parse.ParseQuery;
-import com.parse.SaveCallback;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -53,8 +52,7 @@ public class TVGuideSelectionsFragment extends ListFragment {
     private DbxDatastoreManager mDatastoreManager;
     private DbxDatastore mDataStore;
 
-    private static final String APP_KEY = "1gcb7qc9cejlxml";
-    private static final String APP_SECRET = "8627e2gpg6reb40";
+
     private ArrayAdapter<String> mAdapter;
     private String mDisplaymode= Constants.GENRES;
     /**
@@ -161,7 +159,7 @@ public class TVGuideSelectionsFragment extends ListFragment {
         super.onCreate(savedInstanceState);
 
         Log.i(TVGuideSelectionsFragment.class.getName(), "onCreate");
-        mAccountManager = DbxAccountManager.getInstance(getActivity().getApplicationContext(), APP_KEY, APP_SECRET);
+        mAccountManager = DbxAccountManager.getInstance(getActivity().getApplicationContext(), TVGuideApplication.APP_KEY, TVGuideApplication.APP_SECRET);
 
         if (mAccountManager.hasLinkedAccount()) {
             try {
@@ -175,7 +173,7 @@ public class TVGuideSelectionsFragment extends ListFragment {
         }
 
         try {
-            mDataStore = mDatastoreManager.openDefaultDatastore();
+            mDataStore = mDatastoreManager. openDefaultDatastore();
         } catch (DbxException e ) {
             Log.e("dropbox", "error opening datastore: "+e.getMessage());
         }

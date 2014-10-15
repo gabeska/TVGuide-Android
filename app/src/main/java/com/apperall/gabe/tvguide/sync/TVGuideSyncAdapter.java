@@ -21,13 +21,6 @@ import com.apperall.gabe.tvguide.Contentproviders.TVGuideProvider;
 import com.apperall.gabe.tvguide.Model.Channel;
 import com.apperall.gabe.tvguide.Model.Programme;
 import com.apperall.gabe.tvguide.R;
-import com.dropbox.sync.android.DbxAccountManager;
-import com.dropbox.sync.android.DbxDatastore;
-import com.dropbox.sync.android.DbxDatastoreManager;
-import com.dropbox.sync.android.DbxException;
-import com.dropbox.sync.android.DbxFields;
-import com.dropbox.sync.android.DbxRecord;
-import com.dropbox.sync.android.DbxTable;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -41,7 +34,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -80,7 +72,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
                 return;
             }
         }
-        //updateChannels(); // TODO: nadenken over waar/wanneer dit moet gebeuren
+        updateChannels(); // TODO: nadenken over waar/wanneer dit moet gebeuren
 
 
         JSONArray programmeArray = refreshProgrammes();
@@ -159,48 +151,38 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
             }
         });
 */
-        JSONArray channels = refreshChannels();
-        if (channels==null) {
-            Log.d(TAG, "channels is null, can't update");
+        JSONArray channelsArray = refreshChannels();
+        if (channelsArray==null) {
+            Log.e(TAG, "channels is null, can't update");
             return;
         }
-        // todo: centrale plek voor al het dropbox-spul vinden
-         final String APP_KEY = "1gcb7qc9cejlxml";
-         final String APP_SECRET = "8627e2gpg6reb40";
 
-        DbxAccountManager accountManager =  DbxAccountManager.getInstance( getContext().getApplicationContext(), APP_KEY, APP_SECRET);
+            ContentResolver resolver = getContext().getContentResolver();
+            resolver.delete(TVGuideProvider.CHANNEL_CONTENT_URI, null, null);
+            Vector<ContentValues> cvVector = new Vector<ContentValues>(channelsArray.length());
 
-        DbxDatastore datastore=null;
-        try {
-           datastore = DbxDatastoreManager.localManager(accountManager).openDefaultDatastore();
-            DbxTable channelsTable = datastore.getTable("channels");
-            clearDbxTable(channelsTable);
-            for (int i=0; i <  channels.length(); i++) {
-                Channel channel = new Channel();
-                channel.setFromJSON(channels.getJSONObject(i));
-                DbxFields fields = new DbxFields();
-                fields.set("name", channel.getName());
-                fields.set("iconURL", channel.getIconUrl());
-                fields.set("source",channel.getSource());
-                fields.set("extId", channel.getExtId());
-                fields.set("objectId", channel.getObjectId());
+            for (int i = 0; i < channelsArray.length(); i++) {
+                try {
+                    JSONObject jsonObject = channelsArray.getJSONObject(i);
 
-                channelsTable.insert(fields);
+                    Channel channel = new Channel();
+                    channel.setFromJSON(jsonObject);
+                    cvVector.add(channel.asContentValues());
 
-
+                } catch (JSONException e) {
+                    Log.e(TAG, "json error: " + e.getMessage());
+                }
             }
-            datastore.sync();
-        } catch (DbxException e) {
-            Log.e(TAG, "error getting datastore: "+e.getMessage());
-            e.printStackTrace();
-            return;
-        } catch (JSONException e) {
-            Log.e(TAG, "error reading json for channel: "+e.getMessage());
-        } finally {
-            datastore.close();
-        }
+            if (cvVector.size() > 0) {
+                ContentValues[] cvArray = new ContentValues[cvVector.size()];
+                cvVector.toArray(cvArray);
+                int rowsInserted = resolver.bulkInsert(TVGuideProvider.CHANNEL_CONTENT_URI, cvArray);
+                Log.v(TAG, "inserted " + rowsInserted + " channels into db");
+            }
 
     }
+/*
+zo dus niet, maakt sync onmogelijk
 
     private static void clearDbxTable(DbxTable table) {
         // delete all records in a dbxtable
@@ -221,7 +203,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
 
 
     }
-
+*/
     public static JSONArray readObjectArray(String sourceURLStr) {
 
         Log.i(TAG,"readObjectArray");
@@ -249,9 +231,9 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
 
                 String responseData = builder.toString();
 
-                JSONArray channelsArray =  new JSONArray(responseData);
+                JSONArray objectArray =  new JSONArray(responseData);
                 reader.close();
-                return channelsArray;
+                return objectArray;
 
             } else {
                 Log.i(TAG, "unsuccessful HTTP response: "+responseCode);
