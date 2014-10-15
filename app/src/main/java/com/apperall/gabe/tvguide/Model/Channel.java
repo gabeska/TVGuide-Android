@@ -1,8 +1,12 @@
 package com.apperall.gabe.tvguide.Model;
 
 import android.content.ContentValues;
+import android.util.Log;
 
 import com.parse.ParseObject;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Created by gabe on 28/08/14.
@@ -117,6 +121,20 @@ public class Channel {
         this.setSource(values.getAsString(C_CHANNEL_SOURCE));
         this.setExtId(values.getAsString(C_CHANNEL_EXT_ID));
 
+    }
+
+    public void setFromJSON(JSONObject jsonObject) {
+        try {
+            setObjectId(jsonObject.getString("_id"));
+            setIconUrl(jsonObject.getString("iconURL"));
+            setSource(jsonObject.getString("source"));
+            setExtId(jsonObject.getString("id"));
+            setName(jsonObject.getString("name"));
+
+
+        } catch (JSONException e) {
+            Log.e("Channel", "Error reading from JSON: "+e.getMessage());
+        }
     }
 
     @Override

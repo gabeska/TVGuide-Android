@@ -4,19 +4,19 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK"/>
-    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS"/>
-    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS"/>
-    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS" />
 
     <application
-        android:name=".TVGuideApplication"
+        android:name="com.apperall.gabe.tvguide.TVGuideApplication"
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name=".UI.Activities.TVGuideMainActivity"
+            android:name="com.apperall.gabe.tvguide.UI.Activities.TVGuideMainActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,75 +25,93 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".UI.Activities.TVGuideSelectionsActivity"
+            android:name="com.apperall.gabe.tvguide.UI.Activities.TVGuideSelectionsActivity"
             android:label="@string/title_programmeschedule_detail"
-            android:parentActivityName=".UI.Activities.TVGuideMainActivity" >
+            android:parentActivityName="com.apperall.gabe.tvguide.UI.Activities.TVGuideMainActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".ProgrammeScheduleListActivity" />
         </activity>
-        <activity android:name="com.facebook.LoginActivity">
+        <activity android:name="com.facebook.LoginActivity" >
         </activity>
+
         <service
-            android:name=".UpdateService"
+            android:name="com.apperall.gabe.tvguide.UpdateService"
             android:enabled="true"
             android:exported="true" >
         </service>
 
         <provider
-            android:name=".Contentproviders.TVGuideProvider"
+            android:name="com.apperall.gabe.tvguide.Contentproviders.TVGuideProvider"
             android:authorities="com.apperall.gabe.tvguide.tvguideprovider"
             android:enabled="true"
-            android:syncable="true"
-            android:exported="true" >
+            android:exported="true"
+            android:syncable="true" >
         </provider>
 
         <receiver
-            android:name=".Broadcastreceivers.WakefulUpdateReceiver"
+            android:name="com.apperall.gabe.tvguide.Broadcastreceivers.WakefulUpdateReceiver"
             android:enabled="true"
             android:exported="true" >
         </receiver>
 
-
-        <service android:name=".sync.TVGuideAuthenticatorService">
+        <service android:name="com.apperall.gabe.tvguide.sync.TVGuideAuthenticatorService" >
             <intent-filter>
-                <action android:name="android.accounts.AccountAuthenticator"/>
+                <action android:name="android.accounts.AccountAuthenticator" />
             </intent-filter>
+
             <meta-data
                 android:name="android.accounts.AccountAuthenticator"
-                android:resource="@xml/authenticator"/>
-
+                android:resource="@xml/authenticator" />
         </service>
-
-        <service android:name=".sync.TVGuideSyncService"
-            android:exported="true"
-            >
+        <service
+            android:name="com.apperall.gabe.tvguide.sync.TVGuideSyncService"
+            android:exported="true" >
             <intent-filter>
-                <action android:name="android.content.SyncAdapter"/>
+                <action android:name="android.content.SyncAdapter" />
             </intent-filter>
+
             <meta-data
                 android:name="android.content.SyncAdapter"
-                android:resource="@xml/syncadapter"/>
-
+                android:resource="@xml/syncadapter" />
         </service>
+
         <activity android:name="com.dropbox.sync.android.DbxAuthActivity" />
         <activity
             android:name="com.dropbox.client2.android.AuthActivity"
             android:launchMode="singleTask" >
             <intent-filter>
                 <data android:scheme="db-1gcb7qc9cejlxml" />
+
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.BROWSABLE" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
+
         <service
             android:name="com.dropbox.sync.android.DbxSyncService"
             android:enabled="true"
             android:exported="false"
             android:label="Dropbox Sync" />
 
-
+        <activity
+            android:name="com.apperall.gabe.tvguide.UI.Activities.ChannelsActivity"
+            android:label="@string/title_activity_channels"
+            android:parentActivityName="com.apperall.gabe.tvguide.UI.Activities.TVGuideMainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.apperall.gabe.tvguide.UI.Activities.TVGuideMainActivity" />
+        </activity>
+        <activity
+            android:name="com.apperall.gabe.tvguide.UI.Activities.DSLVActivity"
+            android:label="@string/title_activity_dslv"
+            android:parentActivityName="com.apperall.gabe.tvguide.UI.Activities.TVGuideMainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.apperall.gabe.tvguide.UI.Activities.TVGuideMainActivity" />
+        </activity>
     </application>
 
 </manifest>

@@ -153,6 +153,10 @@ public class TVGuideMainActivity extends Activity
             case R.id.action_refresh:
                 TVGuideSyncAdapter.syncImmediately(this);
                 return true;
+            case R.id.dslv:
+                Intent i = new Intent(getApplicationContext(), DSLVActivity.class);
+                startActivity(i);
+
 
             default:
                 return false;

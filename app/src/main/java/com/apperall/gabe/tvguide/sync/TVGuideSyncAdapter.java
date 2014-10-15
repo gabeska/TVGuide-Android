@@ -21,10 +21,13 @@ import com.apperall.gabe.tvguide.Contentproviders.TVGuideProvider;
 import com.apperall.gabe.tvguide.Model.Channel;
 import com.apperall.gabe.tvguide.Model.Programme;
 import com.apperall.gabe.tvguide.R;
-import com.parse.FindCallback;
-import com.parse.ParseException;
-import com.parse.ParseObject;
-import com.parse.ParseQuery;
+import com.dropbox.sync.android.DbxAccountManager;
+import com.dropbox.sync.android.DbxDatastore;
+import com.dropbox.sync.android.DbxDatastoreManager;
+import com.dropbox.sync.android.DbxException;
+import com.dropbox.sync.android.DbxFields;
+import com.dropbox.sync.android.DbxRecord;
+import com.dropbox.sync.android.DbxTable;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -38,7 +41,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
-import java.util.List;
+import java.util.Iterator;
 import java.util.Vector;
 
 /**
@@ -60,7 +63,6 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
     public void onPerformSync(Account account, Bundle extras, String authority, ContentProviderClient provider, SyncResult syncResult) {
         Log.d(TAG, "onPerformSync");
 
-        //updateChannels(); // TODO: nadenken over waar/wanneer dit moet gebeuren
 
         boolean syncOnWifiOnly = true; // todo: uit extras halen
 
@@ -78,6 +80,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
                 return;
             }
         }
+        //updateChannels(); // TODO: nadenken over waar/wanneer dit moet gebeuren
 
 
         JSONArray programmeArray = refreshProgrammes();
@@ -129,7 +132,7 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
 
     public void updateChannels() {
         Log.i(TAG, "updateChannels");
-        ParseQuery<ParseObject>query = ParseQuery.getQuery("Channel");
+        /*ParseQuery<ParseObject>query = ParseQuery.getQuery("Channel");
         //query.setCachePolicy(ParseQuery.CachePolicy.CACHE_ELSE_NETWORK); // TODO: hierover nadenken!
 
         query.findInBackground(new FindCallback<ParseObject>() {
@@ -155,20 +158,79 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
                 }
             }
         });
+*/
+        JSONArray channels = refreshChannels();
+        if (channels==null) {
+            Log.d(TAG, "channels is null, can't update");
+            return;
+        }
+        // todo: centrale plek voor al het dropbox-spul vinden
+         final String APP_KEY = "1gcb7qc9cejlxml";
+         final String APP_SECRET = "8627e2gpg6reb40";
+
+        DbxAccountManager accountManager =  DbxAccountManager.getInstance( getContext().getApplicationContext(), APP_KEY, APP_SECRET);
+
+        DbxDatastore datastore=null;
+        try {
+           datastore = DbxDatastoreManager.localManager(accountManager).openDefaultDatastore();
+            DbxTable channelsTable = datastore.getTable("channels");
+            clearDbxTable(channelsTable);
+            for (int i=0; i <  channels.length(); i++) {
+                Channel channel = new Channel();
+                channel.setFromJSON(channels.getJSONObject(i));
+                DbxFields fields = new DbxFields();
+                fields.set("name", channel.getName());
+                fields.set("iconURL", channel.getIconUrl());
+                fields.set("source",channel.getSource());
+                fields.set("extId", channel.getExtId());
+                fields.set("objectId", channel.getObjectId());
+
+                channelsTable.insert(fields);
+
+
+            }
+            datastore.sync();
+        } catch (DbxException e) {
+            Log.e(TAG, "error getting datastore: "+e.getMessage());
+            e.printStackTrace();
+            return;
+        } catch (JSONException e) {
+            Log.e(TAG, "error reading json for channel: "+e.getMessage());
+        } finally {
+            datastore.close();
+        }
+
+    }
+
+    private static void clearDbxTable(DbxTable table) {
+        // delete all records in a dbxtable
+        try {
+            DbxTable.QueryResult records = table.query();
+            if (records.hasResults()) {
+                Iterator<DbxRecord>  recordIterator =records.iterator();
+                while (recordIterator.hasNext()) {
+                    recordIterator.next().deleteRecord();
+                }
+                table.getDatastore().sync();
+
+            }
+
+        } catch (DbxException e) {
+            e.printStackTrace();
+        }
 
 
     }
 
+    public static JSONArray readObjectArray(String sourceURLStr) {
 
-    public static JSONArray refreshProgrammes() {
-        Log.i(TAG,"refreshProgrammes");
+        Log.i(TAG,"readObjectArray");
         try {
 
-           // URL programmesURL = new URL("http://192.168.0.42:4000/programmes");
-            URL programmesURL = new URL("https://dl.dropboxusercontent.com/u/9123590/programmes.json");
-            // TODO: optie maken om alleen op wifi te syncen!
+            // URL programmesURL = new URL("http://192.168.0.42:4000/programmes");
+            URL sourceURL = new URL(sourceURLStr);
 
-            HttpURLConnection connection = (HttpURLConnection) programmesURL.openConnection();
+            HttpURLConnection connection = (HttpURLConnection) sourceURL.openConnection();
 
             connection.connect();
 
@@ -186,11 +248,10 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
                 }
 
                 String responseData = builder.toString();
-                //Log.v(TAG, responseData);
-                //JSONObject jsonObject = new JSONObject(responseData);
-                JSONArray programmeArray =  new JSONArray(responseData);
+
+                JSONArray channelsArray =  new JSONArray(responseData);
                 reader.close();
-                return programmeArray;
+                return channelsArray;
 
             } else {
                 Log.i(TAG, "unsuccessful HTTP response: "+responseCode);
@@ -210,6 +271,25 @@ public class TVGuideSyncAdapter extends AbstractThreadedSyncAdapter{
         }
 
         return null;
+
+
+    }
+
+
+    public static JSONArray refreshChannels() {
+        Log.i(TAG,"refreshChannels");
+
+
+        return readObjectArray("https://dl.dropboxusercontent.com/u/9123590/channels.json");
+
+    }
+
+
+    public static JSONArray refreshProgrammes() {
+        Log.i(TAG,"refreshProgrammes");
+
+        return readObjectArray("https://dl.dropboxusercontent.com/u/9123590/programmes.json");
+
     }
 
     /**
